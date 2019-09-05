@@ -1,11 +1,8 @@
 CC=gcc
-CFLAGS=-ansi -Wall -pedantic -g -O2
+CFLAGS=-Wall -Wextra -Werror
 
-ep: ep1-servidor-exemplo.c
-	$(CC) $(CFLAGS) ep1-servidor-exemplo.c -o servidor
-
-%.o: %.c %.h
-	$(CC) $(CFLAGS) -c $<
+ep01: util.c
+	$(CC) ep01.c util.c $(CFLAGS) -g -o bob
 
 clean:
-	rm -rf *.o
+	rm bob
