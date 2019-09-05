@@ -11,6 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <sys/stat.h>
 #include <stdbool.h>
 #include "util.h"
 
@@ -219,9 +220,9 @@ int main (int argc, char **argv) {
                                 write( connfd, "150 File status okay; about to open data connection.\r\n", 54 * sizeof( char));
                                 data_stream = accept( data_socket, NULL, NULL);
                                 write( data_stream, buffer, strlen( buffer));
-                                write( connfd, "226 Closing data connection.Requested file action successful\r\n", 62 * sizeof( char));
                                 close( data_stream);
                                 close( data_socket);
+                                write( connfd, "226 Closing data connection.Requested file action successful\r\n", 62 * sizeof( char));
                                 data_socket = -1;
                             }
                         }
@@ -235,8 +236,38 @@ int main (int argc, char **argv) {
                 }
                 //RETR <SP> <pathname> <CRLF>
                 else if (!strncmp( recvline, "RETR ", 5 * sizeof( char))) {
-                    printf( "CARA QUER RECEBER UNS ARQUIVOS POW\n");
-                    write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
+                    if (!logged_in)
+                        write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
+                    else {
+                        if (getName( recvline, name, MAXLINE + 1)) {
+                            printf( "O CARA NÃO DEU UM NOME CACETE\n");
+                            write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
+                        }
+                        else {
+                            if (data_socket == -1){
+                                printf( "NÃO DEU PASV ANTES\n");
+                                write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
+                            }
+                            else {
+                                printf("EAE0\n");
+                                FILE *fl;
+                                char *big_buffer;
+                                struct stat *file_mdata = NULL;
+                                fl = fopen( name, "r");
+                                stat( name, file_mdata);
+                                big_buffer = malloc( file_mdata->st_size);
+                                fread( big_buffer, 1, file_mdata->st_size, fl);
+                                data_stream = accept( data_socket, NULL, NULL);
+                                write( data_stream, big_buffer, strlen( big_buffer));
+                                close( data_stream);
+                                close( data_socket);
+                                free(big_buffer);
+                                write( connfd, "226 Closing data connection.Requested file action successful\r\n", 62 * sizeof( char));
+                                data_socket = -1;
+                            }
+                        }
+                    }
+
                 }
 
                 else if (!strncmp( recvline, "PASV\r\n", 6 * sizeof( char))) {
