@@ -210,10 +210,10 @@ int main (int argc, char **argv) {
                                     write( connfd, "450 Requested file action not taken.\r\n", 38 * sizeof( char));
                                 }
                                 else {
-                                    write( connfd, "125 Data connection already open; transfer starting.\r\n", 54 * sizeof( char));
+                                    write( connfd, "150 File status okay; about to open data connection.\r\n", 54 * sizeof( char));
                                     data_stream = accept( data_socket, NULL, NULL);
                                     write( data_stream, buffer, strlen( buffer));
-                                    write( connfd, "226 Closing data connection.\nRequested file action successful\r\n", 63 * sizeof( char));
+                                    write( connfd, "226 Closing data connection.Requested file action successful\r\n", 62 * sizeof( char));
                                     /*Sei lá eu*/
                                     close( data_stream);
                                     close( data_socket);
