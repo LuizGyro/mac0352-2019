@@ -154,9 +154,9 @@ int main (int argc, char **argv) {
                 if (!strncmp( recvline, "USER ", 5 * sizeof( char))) {
                     logged_in = false;
                     if (getName( recvline, name, MAXLINE + 1))
-                        write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 97 * sizeof( char));
+                        write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 96 * sizeof( char));
                     else {
-                        write( connfd, "331 User name okay, need password.\r\n", 36 * sizeof( char));
+                        write( connfd, "331 User name okay, need password.\r\n", 35 * sizeof( char));
                         strncpy( path, "/home/", 10);
                         strncat( path, name, MAXLINE);
                         can_pass = true;
@@ -166,52 +166,52 @@ int main (int argc, char **argv) {
                 else if (!strncmp( recvline, "PASS ", 5 * sizeof( char))) {
                     if ( can_pass) {
                         if (chdir( path) == -1)
-                            write( connfd, "530 Not logged in.\r\n", 21 * sizeof( char));
+                            write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
                         else {
-                            write( connfd, "230 User logged in, proceed.\r\n", 31 * sizeof( char));
+                            write( connfd, "230 User logged in, proceed.\r\n", 30 * sizeof( char));
                             logged_in = true;
                         }
                     }
                     else
-                        write( connfd, "503 Bad sequence of commands.\r\n", 32 * sizeof( char));
+                        write( connfd, "503 Bad sequence of commands.\r\n", 31 * sizeof( char));
                     can_pass = false;
                 }
 
-                else if (!strncmp( recvline, "QUIT\r\n", 7 * sizeof( char))) {
-                    write( connfd, "221 Service closing control connection.\nLogged out if appropriate.\r\n", 69 * sizeof( char));
+                else if (!strncmp( recvline, "QUIT\r\n", 6 * sizeof( char))) {
+                    write( connfd, "221 Service closing control connection.\nLogged out if appropriate.\r\n", 68 * sizeof( char));
                     break;
                 }
 
                 else if (!strncmp( recvline, "DELE ", 5 * sizeof( char))) {
                     if (!logged_in)
-                        write( connfd, "530 Not logged in.\r\n", 21 * sizeof( char));
+                        write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
                     else if (getName( recvline, name, MAXLINE + 1))
-                        write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 97 * sizeof( char));
+                        write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 96 * sizeof( char));
                     else {
                         if (remove( name) == -1)
-                            write( connfd, "550 Requested action not taken.\nFile unavailable (e.g., file not found, no access).\r\n", 86 * sizeof( char));
+                            write( connfd, "550 Requested action not taken.\nFile unavailable (e.g., file not found, no access).\r\n", 85 * sizeof( char));
                        else
-                            write( connfd, "250 Requested file action okay, completed.\r\n", 45 * sizeof( char));
+                            write( connfd, "250 Requested file action okay, completed.\r\n", 44 * sizeof( char));
                     }
                 }
 
-                else if (!strncmp( recvline, "LIST\r\n", 7 * sizeof( char)) ||
-                !strncmp( recvline, "LIST ", 6 * sizeof( char))) {
+                else if (!strncmp( recvline, "LIST\r\n", 6 * sizeof( char)) ||
+                !strncmp( recvline, "LIST ", 5 * sizeof( char))) {
 
                     if (!logged_in)
-                        write( connfd, "530 Not logged in.\r\n", 21 * sizeof( char));
+                        write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
                     else {
                         if (getName( recvline, name, MAXLINE + 1))
                             if (getFiles( ".", buffer, MAXLINE))
-                                write( connfd, "501 Syntax error in parameters or arguments.\r\n", 47 * sizeof( char));
+                                write( connfd, "501 Syntax error in parameters or arguments.\r\n", 46 * sizeof( char));
                             else {
                                 if (data_socket == -1) {
-                                    write( connfd, "450 Requested file action not taken.\r\n", 39 * sizeof( char));
+                                    write( connfd, "450 Requested file action not taken.\r\n", 38 * sizeof( char));
                                 }
                                 else {
-                                    write( connfd, "125 Data connection already open; transfer starting.\r\n", 55 * sizeof( char));
+                                    write( connfd, "125 Data connection already open; transfer starting.\r\n", 54 * sizeof( char));
                                     //write( data_socket, buffer, strlen( buffer));
-                                    write( connfd, "226 Closing data connection.\nRequested file action successful\r\n", 64 * sizeof( char));
+                                    write( connfd, "226 Closing data connection.\nRequested file action successful\r\n", 63 * sizeof( char));
                                     close( data_socket);
                                     data_socket = -1;
                                 }
@@ -221,9 +221,9 @@ int main (int argc, char **argv) {
                             strcat( extra, "/");
                             strcat( extra, name);
                             if (getFiles( extra, buffer, MAXLINE))
-                                write( connfd, "501 Syntax error in parameters or arguments.\r\n", 47 * sizeof( char));
+                                write( connfd, "501 Syntax error in parameters or arguments.\r\n", 46 * sizeof( char));
                             else {
-                                write( connfd, "125 Data connection already open; transfer starting.\r\n", 55 * sizeof( char));
+                                write( connfd, "125 Data connection already open; transfer starting.\r\n", 54 * sizeof( char));
                             }
                         }
                     }
@@ -232,21 +232,21 @@ int main (int argc, char **argv) {
                 //STOR <SP> <pathname> <CRLF>
                 else if (!strncmp( recvline, "STOR ", 5 * sizeof( char))) {
                     printf( "CARA QUER TRANSFERIR UNS ARQUIVOS UNS ARQUIVOS POW\n");
-                    write( connfd, "502 Command not implemented.\r\n", 31 * sizeof( char));
+                    write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
                 }
                 //RETR <SP> <pathname> <CRLF>
                 else if (!strncmp( recvline, "RETR ", 5 * sizeof( char))) {
                     printf( "CARA QUER RECEBER UNS ARQUIVOS POW\n");
-                    write( connfd, "502 Command not implemented.\r\n", 31 * sizeof( char));
+                    write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
                 }
 
-                else if (!strncmp( recvline, "PASV\r\n", 7 * sizeof( char))) {
+                else if (!strncmp( recvline, "PASV\r\n", 6 * sizeof( char))) {
                     if (!logged_in)
-                        write( connfd, "530 Not logged in.\r\n", 21 * sizeof( char));
+                        write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
                     else {
                         int data_port = openPort( MINPORT, MAXPORT, &data_socket);
                         if (data_port == 1)
-                            write( connfd, "420 Not abble to open socket.\r\n", 32 * sizeof( char));
+                            write( connfd, "420 Not abble to open socket.\r\n", 31 * sizeof( char));
                         else {
                             sprintf( buffer, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d).\r\n",
                             127 & 0xff, 0 & 0xff, 0 & 0xff,
@@ -256,11 +256,11 @@ int main (int argc, char **argv) {
                     }
                 }
 
-                else if (!strncmp( recvline, "SYST\r\n", 7 * sizeof( char))) {
-                    write( connfd, "502 Command not implemented.\r\n", 31 * sizeof( char));
+                else if (!strncmp( recvline, "SYST\r\n", 6 * sizeof( char))) {
+                    write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
                 }
                 else {
-                    write( connfd, "502 Command not implemented.\r\n", 31 * sizeof( char));
+                    write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
                 }
             }
             /* ========================================================= */
