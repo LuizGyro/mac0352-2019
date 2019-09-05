@@ -82,7 +82,7 @@ int main (int argc, char **argv) {
 
     printf( "[Servidor no ar. Aguardando conexoes na porta %s]\n",argv[1]);
     printf( "[Para finalizar, pressione CTRL+c ou rode um kill ou killall]\n");
-   
+
     /* O servidor no final das contas é um loop infinito de espera por
     * conexões e processamento de cada uma individualmente */
     for (;;) {
@@ -121,7 +121,7 @@ int main (int argc, char **argv) {
             * considerado que o cliente vai enviar algo para o servidor.
             * O servidor vai processar o que tiver sido enviado e vai
             * enviar uma resposta para o cliente (Que precisará estar
-            * esperando por esta resposta) 
+            * esperando por esta resposta)
             */
 
             /* ========================================================= */
@@ -131,7 +131,7 @@ int main (int argc, char **argv) {
             /* ========================================================= */
             /* TODO: É esta parte do código que terá que ser modificada
              * para que este servidor consiga interpretar comandos FTP   */
-            
+
             bool can_pass = false;
             bool logged_in = false;
             int data_socket = -1;
@@ -140,7 +140,7 @@ int main (int argc, char **argv) {
             char buffer[MAXLINE + 1];
             char extra[MAXLINE + 1];
 
-            write( connfd, "220 Service ready\r\n", 20 * sizeof( char));
+            write( connfd, "220 Service ready\r\n", 19 * sizeof( char));
 
             while ((n = read( connfd, recvline, MAXLINE)) > 0) {
                 recvline[n] = 0;
@@ -156,8 +156,8 @@ int main (int argc, char **argv) {
                     if (getName( recvline, name, MAXLINE + 1))
                         write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 97 * sizeof( char));
                     else {
-                        write( connfd, "331 User name okay, need password.\r\n", 37 * sizeof( char));
-                        strncpy( path, "/home/\0", 10);   
+                        write( connfd, "331 User name okay, need password.\r\n", 36 * sizeof( char));
+                        strncpy( path, "/home/", 10);
                         strncat( path, name, MAXLINE);
                         can_pass = true;
                     }
