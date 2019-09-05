@@ -156,7 +156,7 @@ int main (int argc, char **argv) {
                     if (getName( recvline, name, MAXLINE + 1))
                         write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 96 * sizeof( char));
                     else {
-                        write( connfd, "331 User name okay, need password.\r\n", 35 * sizeof( char));
+                        write( connfd, "331 User name okay, need password.\r\n", 36 * sizeof( char));
                         strncpy( path, "/home/", 10);
                         strncat( path, name, MAXLINE);
                         can_pass = true;
