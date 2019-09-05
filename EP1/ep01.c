@@ -135,6 +135,7 @@ int main (int argc, char **argv) {
             bool can_pass = false;
             bool logged_in = false;
             int data_socket = -1;
+            int data_stream;
             char name[MAXLINE + 1];
             char path[MAXLINE + 1];
             char buffer[MAXLINE + 1];
@@ -210,8 +211,11 @@ int main (int argc, char **argv) {
                                 }
                                 else {
                                     write( connfd, "125 Data connection already open; transfer starting.\r\n", 54 * sizeof( char));
-                                    //write( data_socket, buffer, strlen( buffer));
+                                    data_stream = accept( data_socket, NULL, NULL);
+                                    write( data_stream, buffer, strlen( buffer));
                                     write( connfd, "226 Closing data connection.\nRequested file action successful\r\n", 63 * sizeof( char));
+                                    /*Sei lá eu*/
+                                    close( data_stream);
                                     close( data_socket);
                                     data_socket = -1;
                                 }
