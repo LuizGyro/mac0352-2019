@@ -155,7 +155,7 @@ int main (int argc, char **argv) {
                 if (!strncmp( recvline, "USER ", 5 * sizeof( char))) {
                     logged_in = false;
                     if (getName( recvline, name, MAXLINE + 1))
-                        write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 96 * sizeof( char));
+                        write( connfd, "500 Syntax error, command unrecognized. This may include errors such as command line too long.\r\n", 96 * sizeof( char));
                     else {
                         write( connfd, "331 User name okay, need password.\r\n", 36 * sizeof( char));
                         strncpy( path, "/home/", 10);
@@ -187,10 +187,10 @@ int main (int argc, char **argv) {
                     if (!logged_in)
                         write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
                     else if (getName( recvline, name, MAXLINE + 1))
-                        write( connfd, "500 Syntax error, command unrecognized.\nThis may include errors such as command line too long.\r\n", 96 * sizeof( char));
+                        write( connfd, "500 Syntax error, command unrecognized. This may include errors such as command line too long.\r\n", 96 * sizeof( char));
                     else {
                         if (remove( name) == -1)
-                            write( connfd, "550 Requested action not taken.\nFile unavailable (e.g., file not found, no access).\r\n", 85 * sizeof( char));
+                            write( connfd, "550 Requested action not taken. File unavailable (e.g., file not found, no access).\r\n", 85 * sizeof( char));
                        else
                             write( connfd, "250 Requested file action okay, completed.\r\n", 44 * sizeof( char));
                     }
