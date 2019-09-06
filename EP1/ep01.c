@@ -231,8 +231,37 @@ int main (int argc, char **argv) {
 
                 //STOR <SP> <pathname> <CRLF>
                 else if (!strncmp( recvline, "STOR ", 5 * sizeof( char))) {
-                    printf( "CARA QUER TRANSFERIR UNS ARQUIVOS UNS ARQUIVOS POW\n");
-                    write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
+                    if (!logged_in)
+                        write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
+                    else {
+                        if (getName( recvline, name, MAXLINE + 1))
+                            write( connfd, "501 Syntax error in parameters or arguments.\r\n", 46 * sizeof( char));
+                        else {
+                            if (data_socket == -1)
+                                write( connfd, "503 Bad sequence of commands.\r\n", 31 * sizeof( char));
+                            else {
+                                FILE *fl;
+                                char small_buffer[1];
+                                if ((fl = fopen( name, "w")) == NULL) {
+                                    printf("Problem opening the file %s\n", strerror(errno));
+                                    write( connfd, "451 Requested action aborted: local error in processing.\r\n", 58 * sizeof( char));
+                                }
+                                else {
+                                    write( connfd, "150 File status okay; about to open data connection.\r\n", 54 * sizeof( char));
+                                    /* Vamos ir lendo de byte em byte */
+                                    data_stream = accept( data_socket, NULL, NULL);
+                                    while ((read( data_stream, small_buffer, 1)) > 0) {
+                                        fprintf(fl, "%s", small_buffer);
+                                    }
+                                    close( data_stream);
+                                    close( data_socket);
+                                    fclose(fl);
+                                    write( connfd, "226 Closing data connection.Requested file action successful.\r\n", 63 * sizeof( char));
+                                    data_socket = -1;
+                                }
+                            }
+                        }
+                    }
                 }
                 //RETR <SP> <pathname> <CRLF>
                 else if (!strncmp( recvline, "RETR ", 5 * sizeof( char))) {
@@ -250,7 +279,6 @@ int main (int argc, char **argv) {
                                 struct stat *file_mdata = malloc( sizeof( struct stat));
                                 if ((fl = fopen( name, "r")) == NULL) {
                                     printf("Problem opening the file %s\n", strerror(errno));
-                                    /* Response: 550 "filename": no such file or directory */
                                     write( connfd, "550 file not found.\r\n", 21 * sizeof( char));
                                 }
                                 else {
@@ -266,6 +294,7 @@ int main (int argc, char **argv) {
                                     close( data_stream);
                                     close( data_socket);
                                     free(big_buffer);
+                                    fclose(fl);
                                     write( connfd, "226 Closing data connection.Requested file action successful.\r\n", 63 * sizeof( char));
                                     data_socket = -1;
                                 }
