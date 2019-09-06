@@ -251,7 +251,7 @@ int main (int argc, char **argv) {
                                     /* Vamos ir lendo de byte em byte */
                                     data_stream = accept( data_socket, NULL, NULL);
                                     while ((read( data_stream, small_buffer, 1)) > 0) {
-                                        fprintf(fl, "%s", small_buffer);
+                                        fprintf(fl, "%c", small_buffer[0]);
                                     }
                                     close( data_stream);
                                     close( data_socket);
