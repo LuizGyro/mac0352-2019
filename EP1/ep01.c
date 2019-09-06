@@ -258,6 +258,7 @@ int main (int argc, char **argv) {
                                         printf("Problem getting the stats %s\n", strerror(errno));
                                         write( connfd, "451 Requested action aborted: local error in processing.\r\n", 58 * sizeof( char));
                                     }
+                                    write( connfd, "150 File status okay; about to open data connection.\r\n", 54 * sizeof( char));
                                     big_buffer = malloc( file_mdata->st_size);
                                     fread( big_buffer, 1, file_mdata->st_size, fl);
                                     data_stream = accept( data_socket, NULL, NULL);
