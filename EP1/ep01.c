@@ -239,31 +239,34 @@ int main (int argc, char **argv) {
                     if (!logged_in)
                         write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
                     else {
-                        if (getName( recvline, name, MAXLINE + 1)) {
-                            printf( "O CARA NÃO DEU UM NOME CACETE\n");
-                            write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
-                        }
+                        if (getName( recvline, name, MAXLINE + 1))
+                            write( connfd, "501 Syntax error in parameters or arguments.\r\n", 46 * sizeof( char));
                         else {
-                            if (data_socket == -1){
-                                printf( "NÃO DEU PASV ANTES\n");
-                                write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
-                            }
+                            if (data_socket == -1)
+                                write( connfd, "503 Bad sequence of commands.\r\n", 31 * sizeof( char));
                             else {
-                                printf("EAE0\n");
                                 FILE *fl;
                                 char *big_buffer;
-                                struct stat *file_mdata = NULL;
-                                fl = fopen( name, "r");
-                                stat( name, file_mdata);
-                                big_buffer = malloc( file_mdata->st_size);
-                                fread( big_buffer, 1, file_mdata->st_size, fl);
-                                data_stream = accept( data_socket, NULL, NULL);
-                                write( data_stream, big_buffer, strlen( big_buffer));
-                                close( data_stream);
-                                close( data_socket);
-                                free(big_buffer);
-                                write( connfd, "226 Closing data connection.Requested file action successful\r\n", 62 * sizeof( char));
-                                data_socket = -1;
+                                struct stat *file_mdata = malloc( sizeof( struct stat));
+                                if ((fl = fopen( name, "r")) == NULL) {
+                                    printf("Problem opening the file %s\n", strerror(errno));
+                                    write( connfd, "451 Requested action aborted: local error in processing.\r\n", 59 * sizeof( char));
+                                }
+                                else {
+                                    if (stat( name, file_mdata) == -1) {
+                                        printf("Problem getting the stats %s\n", strerror(errno));
+                                        write( connfd, "451 Requested action aborted: local error in processing.\r\n", 59 * sizeof( char));
+                                    }
+                                    big_buffer = malloc( file_mdata->st_size);
+                                    fread( big_buffer, 1, file_mdata->st_size, fl);
+                                    data_stream = accept( data_socket, NULL, NULL);
+                                    write( data_stream, big_buffer, strlen( big_buffer));
+                                    close( data_stream);
+                                    close( data_socket);
+                                    free(big_buffer);
+                                    write( connfd, "226 Closing data connection.Requested file action successful.\r\n", 63 * sizeof( char));
+                                    data_socket = -1;
+                                }
                             }
                         }
                     }
@@ -283,6 +286,16 @@ int main (int argc, char **argv) {
                             1 & 0xff, data_port & 0xff, (data_port >> 8) & 0xff);
                             write( connfd, buffer, strlen(buffer) * sizeof( char));
                         }
+                    }
+                }
+
+                else if (!strncmp( recvline, "TYPE ", 5 * sizeof( char))) {
+                    if (strlen( recvline) < 6)
+                        write( connfd, "501 Syntax error in parameters or arguments.\r\n", 46 * sizeof( char));
+                    else if (recvline[5] != 'I')
+                        write( connfd, "504 Command not implemented for that parameter.\r\n", 49 * sizeof( char));
+                    else {
+                        write( connfd, "200 Command okay.\r\n", 19 * sizeof( char));
                     }
                 }
 
