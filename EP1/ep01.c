@@ -251,7 +251,7 @@ int main (int argc, char **argv) {
                                 if ((fl = fopen( name, "r")) == NULL) {
                                     printf("Problem opening the file %s\n", strerror(errno));
                                     /* Response: 550 "filename": no such file or directory */
-                                    write( connfd, "451 Requested action aborted: local error in processing.\r\n", 58 * sizeof( char));
+                                    write( connfd, "550 file not found.\r\n", 21 * sizeof( char));
                                 }
                                 else {
                                     if (stat( name, file_mdata) == -1) {
