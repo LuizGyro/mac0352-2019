@@ -250,12 +250,13 @@ int main (int argc, char **argv) {
                                 struct stat *file_mdata = malloc( sizeof( struct stat));
                                 if ((fl = fopen( name, "r")) == NULL) {
                                     printf("Problem opening the file %s\n", strerror(errno));
-                                    write( connfd, "451 Requested action aborted: local error in processing.\r\n", 59 * sizeof( char));
+                                    /* Response: 550 "filename": no such file or directory */
+                                    write( connfd, "451 Requested action aborted: local error in processing.\r\n", 58 * sizeof( char));
                                 }
                                 else {
                                     if (stat( name, file_mdata) == -1) {
                                         printf("Problem getting the stats %s\n", strerror(errno));
-                                        write( connfd, "451 Requested action aborted: local error in processing.\r\n", 59 * sizeof( char));
+                                        write( connfd, "451 Requested action aborted: local error in processing.\r\n", 58 * sizeof( char));
                                     }
                                     big_buffer = malloc( file_mdata->st_size);
                                     fread( big_buffer, 1, file_mdata->st_size, fl);
