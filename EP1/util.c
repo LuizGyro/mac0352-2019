@@ -43,7 +43,7 @@ openPort( int minPort, int maxPort, int *socketId) {
 
     for (i = minPort; i < maxPort; i++) {
         servaddr.sin_port = htons(i);
-        result = bind( *socketId, (struct sockaddr *)&servaddr, sizeof( servaddr)); 
+        result = bind( *socketId, (struct sockaddr *)&servaddr, sizeof( servaddr));
         if (result == 0) break;
     }
 
@@ -62,7 +62,7 @@ openPort( int minPort, int maxPort, int *socketId) {
 int
 getName( char *input, char *output, int max_size) {
     int i = 5;
-    while (isalnum( input[i])) {
+    while (input[i] >= 32 && input[i] <= 126) {
         if (i >= max_size - 1) {
             return 1;
         }
