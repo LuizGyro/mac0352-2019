@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////
 /////////////////////// EP 1 ///////////////////////
 ////////////////////////////////////////////////////
-//////////////// Nome: Victor Araujo ///////////////
-////////////////// NUSP: ??????? ///////////////////
+// Nome: Victor Chiaradia Gramuglia Araujo /////////
+////////////////// NUSP: 9793756 ///////////////////
 ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 //////// Nome: Luiz Felipe Moumdjian Girotto ///////
@@ -15,13 +15,30 @@
 
 Para compilar o EP, basta utilizar o comando "make".
 
-Para executar o EP, basta digitar "./servidor", seguido
-da porta na qual se deseja que o servidor seja aberto.
+Para executar o EP, basta usar o comando "$ ./servidor $1", onde $1 é a
+porta na qual se deseja que o servidor seja aberto, para usar portas menores
+que 1024 use sudo.
 
 //////////////////////////////////////////////////////////////////////
-/////////////////// Especificações do Desenvolvedor //////////////////
+/////////////////// Especificações dos Desenvolvedores ///////////////
 //////////////////////////////////////////////////////////////////////
 
 Este EP foi desenvolvido em um Lenovo Ideapad 330S, rodando Manjaro
 Linux XFCE versão 18.0.4. O compilador utilizado foi o gcc, versão
-8.2.1.
+8.2.1. Também foi utilizado um PC rodando Ubuntu 18.04 e gcc 7.4.0.
+
+//////////////////////////////////////////////////////////////////////
+/////////////////////Considerações////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
+Não é possível logar com um usuário que não existe no computador que o
+servidor esta sendo hosteado. Isso se deve ao fato de que assim que o
+comando PASS é recebido pelo servidor (qual quer senha é valida) usamos
+a função chdir para facilitar a implemetação dos comandos DELE, LIST STOR
+e RETR. Outra observação é que nosso servidor espera que a pasta do usuário
+esteja ligada diretamente a pasta home (ex: "/home/victor") e não como é
+feito por exemplo na rede linux (ex: "/home/bcc/victor").
+
+Nossa implemetação de LIST mostra todos os arquivos e diretorios, incluindo
+aqueles que começam com ".", além disso não damos informações adcionais já
+que tal comportamento não esta especificado na RFC 958.

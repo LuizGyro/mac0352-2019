@@ -146,6 +146,7 @@ int main (int argc, char **argv) {
 
             while ((n = read( connfd, recvline, MAXLINE)) > 0) {
                 recvline[n] = 0;
+
                 printf( "[Cliente conectado no processo filho %d enviou:] ", getpid());
                 if ((fputs( recvline, stdout)) == EOF) {
                     perror( "fputs :( \n");
@@ -164,7 +165,6 @@ int main (int argc, char **argv) {
                         can_pass = true;
                     }
                 }
-
                 else if (!strncmp( recvline, "PASS ", 5 * sizeof( char))) {
                     if ( can_pass) {
                         if (chdir( path) == -1)
@@ -178,12 +178,11 @@ int main (int argc, char **argv) {
                         write( connfd, "503 Bad sequence of commands.\r\n", 31 * sizeof( char));
                     can_pass = false;
                 }
-
                 else if (!strncmp( recvline, "QUIT\r\n", 6 * sizeof( char))) {
                     write( connfd, "221 Service closing control connection.\nLogged out if appropriate.\r\n", 68 * sizeof( char));
+                    close( connfd);
                     break;
                 }
-
                 else if (!strncmp( recvline, "DELE ", 5 * sizeof( char))) {
                     if (!logged_in)
                         write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
@@ -196,7 +195,6 @@ int main (int argc, char **argv) {
                             write( connfd, "250 Requested file action okay, completed.\r\n", 44 * sizeof( char));
                     }
                 }
-
                 else if (!strncmp( recvline, "LIST\r\n", 6 * sizeof( char)) ||
                 !strncmp( recvline, "LIST ", 5 * sizeof( char))) {
 
@@ -228,8 +226,6 @@ int main (int argc, char **argv) {
                         }
                     }
                 }
-
-                //STOR <SP> <pathname> <CRLF>
                 else if (!strncmp( recvline, "STOR ", 5 * sizeof( char))) {
                     if (!logged_in)
                         write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
@@ -243,19 +239,18 @@ int main (int argc, char **argv) {
                                 FILE *fl;
                                 char small_buffer[1];
                                 if ((fl = fopen( name, "w")) == NULL) {
-                                    printf("Problem opening the file %s\n", strerror(errno));
+                                    printf( "Problem opening the file %s\n", strerror(errno));
                                     write( connfd, "451 Requested action aborted: local error in processing.\r\n", 58 * sizeof( char));
                                 }
                                 else {
                                     write( connfd, "150 File status okay; about to open data connection.\r\n", 54 * sizeof( char));
-                                    /* Vamos ir lendo de byte em byte */
                                     data_stream = accept( data_socket, NULL, NULL);
                                     while ((read( data_stream, small_buffer, 1)) > 0) {
-                                        fprintf(fl, "%c", small_buffer[0]);
+                                        fprintf( fl, "%c", small_buffer[0]);
                                     }
                                     close( data_stream);
                                     close( data_socket);
-                                    fclose(fl);
+                                    fclose( fl);
                                     write( connfd, "226 Closing data connection.Requested file action successful.\r\n", 63 * sizeof( char));
                                     data_socket = -1;
                                 }
@@ -263,7 +258,6 @@ int main (int argc, char **argv) {
                         }
                     }
                 }
-                //RETR <SP> <pathname> <CRLF>
                 else if (!strncmp( recvline, "RETR ", 5 * sizeof( char))) {
                     if (!logged_in)
                         write( connfd, "530 Not logged in.\r\n", 20 * sizeof( char));
@@ -293,8 +287,9 @@ int main (int argc, char **argv) {
                                     write( data_stream, big_buffer, strlen( big_buffer));
                                     close( data_stream);
                                     close( data_socket);
-                                    free(big_buffer);
-                                    fclose(fl);
+                                    free( big_buffer);
+                                    free( file_mdata);
+                                    fclose( fl);
                                     write( connfd, "226 Closing data connection.Requested file action successful.\r\n", 63 * sizeof( char));
                                     data_socket = -1;
                                 }
@@ -323,19 +318,16 @@ int main (int argc, char **argv) {
                 else if (!strncmp( recvline, "TYPE ", 5 * sizeof( char))) {
                     if (strlen( recvline) < 6)
                         write( connfd, "501 Syntax error in parameters or arguments.\r\n", 46 * sizeof( char));
-                    else if (recvline[5] != 'I')
+                    else if (recvline[5] != 'I' || recvline[5] != 'i')
                         write( connfd, "504 Command not implemented for that parameter.\r\n", 49 * sizeof( char));
-                    else {
+                    else
                         write( connfd, "200 Command okay.\r\n", 19 * sizeof( char));
-                    }
                 }
 
-                else if (!strncmp( recvline, "SYST\r\n", 6 * sizeof( char))) {
+                else if (!strncmp( recvline, "SYST\r\n", 6 * sizeof( char)))
                     write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
-                }
-                else {
+                else
                     write( connfd, "502 Command not implemented.\r\n", 30 * sizeof( char));
-                }
             }
             /* ========================================================= */
             /* ========================================================= */
