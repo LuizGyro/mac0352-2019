@@ -27,9 +27,22 @@ Este EP foi desenvolvido em um Lenovo Ideapad 330S, rodando Manjaro
 Linux XFCE versão 18.0.4. O compilador utilizado foi o gcc, versão
 8.2.1. Também foi utilizado um PC rodando Ubuntu 18.04 e gcc 7.4.0.
 
-//////////////////////////////////////////////////////////////////////
-/////////////////////Considerações////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+//////////////// Metodologia de Implementação //////////////// 
+//////////////////////////////////////////////////////////////
+
+Para implementarmos cada comando do servidor, começamos sempre lendo
+as seções pertinentes da RFC 958. Em seguida, observamos o comportamento
+do servidor proftp ao utilizarmos este comando, utilizando-se do Wireshark
+para tal propósito.
+Alguns comandos requeriram a busca de maiores informações (como por exemplo
+o PASV, no qual o artigo da Wikipedia nos foi de grande utilidade).
+Para debuggar, utilizamos uma combinação de prints e Wireshark em
+modo loopback.
+
+///////////////////////////////////////////////////////////////////
+////////////////////////// Considerações ////////////////////////// 
+///////////////////////////////////////////////////////////////////
 
 Não é possível logar com um usuário que não existe no computador que o
 servidor esta sendo hosteado. Isso se deve ao fato de que assim que o
