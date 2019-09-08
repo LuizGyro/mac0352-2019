@@ -20,6 +20,8 @@ int openPort( int minPort, int maxPort, int *socketId);
 */
 int getName( char *input, char *output, int max_size);
 
+/* Esta função devolve o endereço IP local da maquina na qual o
+** servidor esta rodando, em formato IPv4 */
 int getHostIP(char *ip, int ipsize);
 
 #endif
