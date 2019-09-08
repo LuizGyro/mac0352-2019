@@ -315,7 +315,6 @@ int main (int argc, char **argv) {
                             getHostIP(ip, sizeof(ip));
                             token = strtok(ip, ".");
                             while (token != NULL) {
-                                printf("%s\n", token);
                                 n_ip[n] = atoi(token);
                                 n++;
                                 token = strtok(NULL, ".");
