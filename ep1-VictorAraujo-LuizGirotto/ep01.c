@@ -307,9 +307,22 @@ int main (int argc, char **argv) {
                         if (data_port == 1)
                             write( connfd, "420 Not abble to open socket.\r\n", 31 * sizeof( char));
                         else {
+                            char ip[INET_ADDRSTRLEN];
+                            char *token;
+                            int n_ip[4];
+                            int n = 0;
+
+                            getHostIP(ip, sizeof(ip));
+                            token = strtok(ip, ".");
+                            while (token != NULL) {
+                                printf("%s\n", token);
+                                n_ip[n] = atoi(token);
+                                n++;
+                                token = strtok(NULL, ".");
+                            }
                             sprintf( buffer, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d).\r\n",
-                            127 & 0xff, 0 & 0xff, 0 & 0xff,
-                            1 & 0xff, data_port & 0xff, (data_port >> 8) & 0xff);
+                            n_ip[0] & 0xff, n_ip[1] & 0xff, n_ip[2] & 0xff,
+                            n_ip[3] & 0xff, data_port & 0xff, (data_port >> 8) & 0xff);
                             write( connfd, buffer, strlen(buffer) * sizeof( char));
                         }
                     }

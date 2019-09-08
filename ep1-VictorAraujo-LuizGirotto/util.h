@@ -20,4 +20,6 @@ int openPort( int minPort, int maxPort, int *socketId);
 */
 int getName( char *input, char *output, int max_size);
 
+int getHostIP(char *ip, int ipsize);
+
 #endif
