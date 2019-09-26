@@ -39,3 +39,7 @@ RESPOSTAS:
 > O imortal pode executar a eleição.
 
 > Nem precisa ter codigo de mensagem
+
+> Mostrar nos slides como as mensagens estão sendo trocadas entre duas maquinas. Bem no esquema de como ele faz na aula.
+
+> Junto com o heartbeat, o lider manda pro imortal a lista de quem ta ou não trabalhando
