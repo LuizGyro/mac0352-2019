@@ -2,8 +2,46 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #define MAX 5
+
+int
+getMinInd( long long int *arr, int n) {
+    int minInd = 0;
+    for (int i = 1; i < n; i++)
+        if (arr[i] < arr[minInd])
+            minInd = i;
+    return minInd;
+}
+
+void 
+fkmerge( char *out_name, char **files, int n) {
+    long long int *arr = malloc( n * sizeof( long long int));
+    FILE **fds = malloc( n * sizeof( FILE *));
+    FILE *out_fd = fopen( out_name, "w");
+    char *buffer = malloc( 10000 * sizeof( char));
+    int j;
+    for (int i = 0; i < n; i++) {
+        fds[i] = fopen( files[i], "r");
+        arr[i] = atoll(fgets( buffer, 10000, fds[i]));
+    }
+
+    int i = 0;
+    while (i < n) {
+        j = getMinInd( arr, n);
+        fprintf( out_fd, "%lld\n", arr[j]);
+        if (fgets( buffer, 10000, fds[j]) == NULL) {
+            arr[j] = LONG_MAX;
+            fclose( fds[j]);
+            i++;
+        }
+        else
+            arr[j] = atoll(buffer);
+    } 
+    fclose( out_fd);
+    return;
+}
 
 static int
 cmpll( const void *addr_1, const void *addr_2) {
@@ -115,8 +153,8 @@ splitFiles( char *file_name) {
     return file_number;
 }
 
-//Just for testing
-void orderAllFiles( int n) {
+//Just for testing;
+void orderAllFiles( int n, char **bob) {
     int i = 0;
     char *name_in = malloc( 200 * sizeof( char));
     char *name_out = malloc( 200 * sizeof( char));
@@ -131,13 +169,14 @@ void orderAllFiles( int n) {
         snprintf( number, 200 * sizeof( char), "%d", i);
         strncat( name_out, number, 200 * sizeof( char));
         strncat( name_out, ".txt", 200 * sizeof( char));
-    
+        strncpy( bob[i] ,name_out, 200 * sizeof( char));
         orderFile( name_in, name_out);
         i++;
     }
     return;
 }
 
+//Again Just for testing;
 int 
 main( int argc, char **argv) {
     int n;
@@ -146,6 +185,13 @@ main( int argc, char **argv) {
         return EXIT_FAILURE;
     }
     n = splitFiles( argv[1]);
-    orderAllFiles( n + 1);
+    char **bob = malloc( (n + 1) * sizeof(char *));
+    for (int i = 0; i < n + 1; i++)
+        bob[i] = malloc( 200 * sizeof( char));
+    orderAllFiles( n + 1, bob);
+    fkmerge("result.txt", bob, n + 1);
+    for (int i = 0; i < n + 1; i++)
+        free(bob[i]);
+    free(bob);
     return 0;
 }
