@@ -10,8 +10,8 @@ O papel que um computador pode assumir.
 << PROCESSOS >>
 Cada papel terá dois ou mais processos. Especifiquemos o que cada processo deve fazer.
 	> DEUS-Trabalhador: ordena números. Todos os papéis possuem este processo.
-	> DEUS-Listener: Escuta dos processos trabalhadores. Pode receber dois tipos de mensagem: (1) Chegada de um novo computador, (2) Receber trabalho completo de um
-                         trabalhador.
+	> DEUS-Listener: Escuta dos processos trabalhadores. Pode receber dois tipos de mensagem: (1) Chegada de um novo computador (resposta do heartbeat),
+                         (2) Receber trabalho completo de um trabalhador.
 	> DEUS-Generico: O processo original. Realiza o heartbeat (será especificado em SITUACOES).
 
 	> LIDER-Trabalhador: ordena números. Todso os papéis possuem este processo.
@@ -22,5 +22,15 @@ Cada papel terá dois ou mais processos. Especifiquemos o que cada processo deve
 	> TRABALHADOR-Trabalhador: ordena números. Todos os papéis possuem este processo.
 	> TRABALHADOR-Listener: Escuta o heartbeat de DEUS-Generico. Recebe trabalho de LIDER-Generico.
 
+<< ESTADOS >>
+
+Processos podem estar em tres estados diferentes.
+
+> VIVOS-e-TRABALHANDO
+> VIVOS-e-NAO-TRABALHANDO
+> MORTOS
+
 
 << SITUACOES >>
+
+> INICIALIZACAO: DEUS-Generico
