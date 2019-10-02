@@ -1,0 +1,26 @@
+Para organizar nosso programa, vamos determinar algumas especificações.
+
+
+<< PAPEL >>
+O papel que um computador pode assumir.
+	> DEUS é o computador original, que fornece os números a serem ordenados, e deve receber os números ordenados no fim.
+	> LIDER é o computador líder, no momento.
+	> TRABALHADOR é um computador trabalhador genérico.
+
+<< PROCESSOS >>
+Cada papel terá dois ou mais processos. Especifiquemos o que cada processo deve fazer.
+	> DEUS-Trabalhador: ordena números. Todos os papéis possuem este processo.
+	> DEUS-Listener: Escuta dos processos trabalhadores. Pode receber dois tipos de mensagem: (1) Chegada de um novo computador, (2) Receber trabalho completo de um
+                         trabalhador.
+	> DEUS-Generico: O processo original. Realiza o heartbeat (será especificado em SITUACOES).
+
+	> LIDER-Trabalhador: ordena números. Todso os papéis possuem este processo.
+	> LIDER-Listener: Recebe informações de DEUS-Generico, durante o heartbeat. Mais especificamente, recebe a lista dos computadores vivos,
+                          computadores trabalhando, e a lista de trabalho restante.
+	> LIDER-Generico: Manda trabalho para os demais computadores (incluindo DEUS, se este não for o LIDER, também).
+
+	> TRABALHADOR-Trabalhador: ordena números. Todos os papéis possuem este processo.
+	> TRABALHADOR-Listener: Escuta o heartbeat de DEUS-Generico. Recebe trabalho de LIDER-Generico.
+
+
+<< SITUACOES >>
