@@ -188,6 +188,7 @@ main( int argc, char **argv) {
         bob[i] = malloc( 200 * sizeof( char));
     orderAllFiles( n + 1, bob);
     fkmerge("result.txt", bob, n + 1);
+
     for (int i = 0; i < n + 1; i++)
         free(bob[i]);
     free(bob);

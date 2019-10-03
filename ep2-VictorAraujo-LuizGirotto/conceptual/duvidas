@@ -1,0 +1,45 @@
+> Dado que o computador central nunca vai morrer, podemos pre-processar o arquivo em arquivos menores com numero fixo de linhas, ou temos que mandar em pedacos?
+
+>>> Ideia:
+
+> Papeis do imortal: heartbeat (guardado em uma lista ligada), ver se o lider esta vivo/morto, e eventualmente eleger um novo lider (ele pode, somente ele??).
+
+> Os processos escrevem direto no imortal.
+
+> O lider tem que fazer chonks. Ele tem um processo em que ele faz os chonks, e o processo do lider.
+
+> O processo lider precisa saber o IP de todos outros processos. Ele sabe quais estão trabalhando ou não. Ele pega os processos que não estão
+  trabalhando, e manda trabalho pra eles. Os processos ficam esperando contato do lider, trabalham, e então tentam contatar o lider, que fica
+  LISTENING, esperando para dar um novo trabalho para os processos.
+
+> O lider é definido por uma token (tipo uma variavel is_leader)
+
+> SOCK_STREAM | SOCK_NONBLOCK na criacao do socket para ele nao ficar travado e podendo dar trabalho nos que querem trabalho.
+
+> Seguinte situação: é elegido um novo lider. Tem gente trabalhando, e gente não trabalhando. O que é mais valido? O lider ter uma lista
+  (possivelmente desatualizada) de quem esta ou nao esta trabalhando, e tentar mandar trabalho pra quem supostamente nao esta trabalhando, ou
+  os processos falam o estado de cada um deles. Se for o segundo, nem precisa criar o socket daquele jeito anterior.
+
+> O lider, depois de tantas ordens, pode ter uma chance (que cresce exponencialmente) de nao mais querer ser lider e convocar uma eleicao.
+
+> O imortal sempre roda a eleição, seja por morte do lider (o imortal percebe), ou por vontade do lider (o lider se comunica)
+
+> Assim, o imortal pode vir a ter 3 processos.
+
+
+RESPOSTAS:
+
+
+> Pode ser a arquitetura dando esses privilegios pro imortal. Pode pegar o arquivo direto do imortal.
+
+> Não pode colocar na RAM tudo, por que tem 3GB no minimo o arquivo
+
+> Se so tem o imortal no programa, ele vai ser o lider, e vai trabalhar tambem. Ele vai ter que conectar a si mesmo pra pegar o arquivo.
+
+> O imortal pode executar a eleição.
+
+> Nem precisa ter codigo de mensagem
+
+> Mostrar nos slides como as mensagens estão sendo trocadas entre duas maquinas. Bem no esquema de como ele faz na aula.
+
+> Junto com o heartbeat, o lider manda pro imortal a lista de quem ta ou não trabalhando

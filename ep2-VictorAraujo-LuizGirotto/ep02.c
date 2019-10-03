@@ -21,6 +21,9 @@
 #include <sys/ioctl.h>
 #include <stdbool.h>
 
+#include "file.h"
+
+
 /* ///////////////////////////////////////////// */
 /* ////////////////// Globals ////////////////// */
 /* ///////////////////////////////////////////// */
@@ -34,6 +37,11 @@ bool is_listener = false;
 /* Process type-specific variables */
 bool is_working = false; /* Only for workers */
 bool want_election = false; /* Only for workers */
+
+int *work_array; /* Only for immortal. 0 means that the file still needs to be ordered. */
+
+/* General control variables */
+bool all_work_done = false; /* Specifies when all work is done, and process should be terminated */
 
 /* ///////////////////////////////////////////// */
 /* ///////////////// Functions ///////////////// */
@@ -54,7 +62,8 @@ int main( int argc, char **argv) {
         /* Start of program: pre-process data, make self leader  */
         /* begin working (IMMORTAL-Worker) while waiting for     */
         /* other computers to join in. */
-        
+        int n_files = splitFiles(argv[1]);
+
 
 
         if ((childpid = fork()) == 0) {
