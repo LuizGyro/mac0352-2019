@@ -7,3 +7,4 @@ ep02: file.c ll.c
 
 clean:
 	rm ep2
+	rm splitIn*
