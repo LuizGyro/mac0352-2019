@@ -15,7 +15,7 @@ getMinInd( long long int *arr, int n) {
     return minInd;
 }
 
-void 
+void
 fkmerge( char *out_name, char **files, int n) {
     long long int *arr = malloc( n * sizeof( long long int));
     FILE **fds = malloc( n * sizeof( FILE *));
@@ -38,7 +38,7 @@ fkmerge( char *out_name, char **files, int n) {
         }
         else
             arr[j] = atoll(buffer);
-    } 
+    }
     fclose( out_fd);
     return;
 }
@@ -110,7 +110,7 @@ newFile( FILE *fd, int file_number) {
     return fd;
 }
 
-int 
+int
 splitFiles( char *file_name) {
     FILE *fd1, *fd2;
     char *buffer;
@@ -153,8 +153,7 @@ splitFiles( char *file_name) {
     return file_number;
 }
 
-//Just for testing;
-void orderAllFiles( int n, char **bob) {
+/* void orderAllFiles( int n, char **bob) {
     int i = 0;
     char *name_in = malloc( 200 * sizeof( char));
     char *name_out = malloc( 200 * sizeof( char));
@@ -174,10 +173,9 @@ void orderAllFiles( int n, char **bob) {
         i++;
     }
     return;
-}
+} */
 
-//Again Just for testing;
-int 
+/* int
 main( int argc, char **argv) {
     int n;
     if (argc < 1) {
@@ -194,4 +192,4 @@ main( int argc, char **argv) {
         free(bob[i]);
     free(bob);
     return 0;
-}
+} */
