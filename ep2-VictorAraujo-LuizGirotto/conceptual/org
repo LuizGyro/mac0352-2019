@@ -33,4 +33,14 @@ Processos podem estar em tres estados diferentes.
 
 << SITUACOES >>
 
-> INICIALIZACAO: DEUS-Generico
+> INICIALIZACAO: DEUS-Generico faz o pre-processamento dos arquivos. Cria um processo DEUS-Listener. 
+                 Cria um processo LIDER-Generico e LIDER-Listener. Cria um processo DEUS-Trabalhador.
+                 DEUS-Generico entra no loop do HEARTBEAT.
+
+> HEARTBEAT: DEUS-Generico tenta se comunicar com cada um dos processos, para descobrir seus ESTADOS. DEUS-Listener recebe, e atualiza as listas de estados pertinentes.
+             DEUS-Generico envia a lista para LIDER-Listener. Caso seja o momento de uma eleição, DEUS-Generico elege um novo computador lider aleatoriamente
+             (como se dará a criação dos novos processos LIDER?).
+
+> MORTE DO LIDER: No HEARTBEAT, Deus-Generico não conseguira alcançar o computador LIDER. Assim, sera convocada uma nova eleição.
+
+> ELEIÇÃO SEM MORTE:
