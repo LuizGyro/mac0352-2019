@@ -21,8 +21,10 @@ The following is a list of all messages available on this system:
 004 - Sending alive processes list
 
 102 - Work request
-103 - Election request
+103 - Am alive
+105 - Election request
 
+203 - Am alive
 210 - Working
 212 - Work done
 

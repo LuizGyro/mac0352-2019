@@ -19,6 +19,8 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
+#include <sys/stat.h>
+
 int
 getIP ( char *ip, int ipsize) {
     int s;
@@ -51,4 +53,17 @@ getIP ( char *ip, int ipsize) {
     }
 
     return 1;
+}
+
+char *getImmortalIP() {
+    FILE *conf;
+    char *ip;
+    struct stat *file_mdata = malloc( sizeof( struct stat));
+
+    conf = fopen( "ep02.conf", "r");
+    stat( conf, file_mdata);
+    ip = malloc( file_mdata->st_size);
+    fread( ip, 1, file_mdata->st_size, conf);
+    return ip;
+
 }

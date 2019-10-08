@@ -10,4 +10,8 @@
 ** programa esta rodando, em formato IPv4 */
 int getIP(char *ip, int ipsize);
 
+/* Esta função devolve o endereço IP do computador imortal, definido
+** no arquivo de configuracao, em formato IPv4 */
+char *getImmortalIP();
+
 #endif
