@@ -14,6 +14,8 @@ typedef struct _work_args {
     int work_number;
 } work_args;
 
+int worker();
+
 void *work(void *args);
 
 #endif

@@ -28,7 +28,8 @@ int
 leader() {
     FILE *fd;
     char buffer[MAXLINE];
-    char work_number[MAXLINE];
+
+    int work_number;
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
     celula_n *work_list malloc( sizeof( celula_n));
@@ -125,11 +126,12 @@ leader() {
             write( connfd, "100\r\n", 5 * sizeof( char));
             read( connfd, buffer, MAXLINE);
 
-            arg->work_number = atoi(buffer);
+            work_number = atoi(buffer);
 
-            makeFileNameIn( arg->work_number, buffer);
+            makeFileNameIn( work_number, buffer);
 
             if ((fd = fopen( buffer, "w")) == NULL) {
+                /*LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)*/
                 fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
                 write( connfd, "111\r\n", 5 * sizeof( char));
                 limpa( alive_list);
@@ -149,9 +151,9 @@ leader() {
                 fprintf( fd, "%s", buffer);
             }
             fclose( fd);
-            /*colocar mutex*/
-            insere( arg->work_number, work_list);
-            /*mutex*/
+            pthread_mutex_lock( work_list_mutex);
+            insere( work_number, work_list);
+            pthread_mutex_unlock( work_list_mutex);
         }
         /*Não vai mais receber trabalho*/
         else if (!strncmp( recvline, "006\r\n", 5 * sizeof( char))) {
@@ -170,7 +172,6 @@ leader() {
     free( alive_list_mutex);
     close( listenfd);
     exit( EXIT_SUCCESS);
-
 }
 
 void *
@@ -179,6 +180,7 @@ communist_leader( void *args) {
     char recvline[MAXLINE + 1];
     char buffer[MAXLINE];
     struct sockaddr_in servaddr_im;
+    bool alive = true;
 
     leader_args *arg = (leader_args *) args;
 
@@ -191,8 +193,10 @@ communist_leader( void *args) {
     servaddr_im.sin_family = AF_INET;
     servaddr_im.sin_port = htons( IMMORTAL_PORT);
 
-    /* Get immortal ip from config */
-    //inet_pton( AF_INET, argv[1], &servaddr.sin_addr);
+    if (inet_pton( AF_INET, getImmortalIP(), &servaddr_im.sin_addr != 1){
+        fprintf(stderr, "ERROR: Some problem with inet_pton\n");
+        exit( EXIT_FAILURE);
+    }
 
     int sockfd_wk;
     struct sockaddr_in servaddr_wk;
@@ -207,21 +211,23 @@ communist_leader( void *args) {
     servaddr_wk.sin_port = htons( WORKER_PORT);
 
 
-    while (true) {
+    while (alive) {
+        pthread_mutex_lock( arg->work_list_mutex);
         if (arg->work_list->prox != NULL) {
             /* Manda trabalho um pra quem ta vivo */
 
             /* Acha alguém que quer trabalhar*/
             celula_ip *p;
+            pthread_mutex_lock( arg->alive_list_mutex);
             p = arg->alive_list->prox;
             while (p != NULL) {
-                if (!inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr)) {
-                  perror( "inet_pton");
-                  exit( EXIT_FAILURE);
+                if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr != 1)) {
+                    perror( "inet_pton");
+                    exit( EXIT_FAILURE);
                 }
                 /* Fazer timeout deste socket ser mais curto do que o normal */
                 if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
-                    fprintf( stderr,"Failed to connect do worker.\n");
+                    fprintf( stderr, "Failed to connect do worker.\n");
                 }
 
                 else {
@@ -235,18 +241,50 @@ communist_leader( void *args) {
                             makeFileNameIn( arg->work_list->prox->wnum, buffer);
                             sendFile( buffer, sockfd_wk);
                             busca_e_remove( arg->work_list->prox->wnum, arg->work_list);
+                            close( sockfd_wk);
                             break;
                         }
                     }
+                    close( sockfd_wk);
                 }
                 p = p->prox;
             }
+            pthread_mutex_unlock( arg->alive_list_mutex);
         }
         else if (*(arg->receiving_jobs) == false) {
-            /* Decide se vai pedir trabalho pro imortal, ou se vai */
-            /* deixar de ser lider */
+            if (nextLeader()) {
+                /* Request new leader election */
+                if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
+                    fprintf( stderr, "Failed to connect do worker.\n");
+                }
+                write( sockfd_im, "105\r\n", 5 * sizeof( char)));
+                alive = false;
+                close( sockfd_im);
+            }
+            else {
+                /* Remain as leader, request new workload */
+                if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
+                    fprintf( stderr, "Failed to connect do worker.\n");
+                }
+                write( sockfd_im, "106\r\n", 5 * sizeof( char)));
+                read( sockfd_im, buffer, MAXLINE);
+                if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
+                    *(arg->receiving_jobs) = true;
+                }
+                else {
+                    alive = false;
+                }
+            }
         }
+        pthread_mutex_unlock( arg->work_list_mutex);
     }
 
     return NULL;
+}
+
+bool
+nextLeader() {
+    if (rand() % 2)
+        return true;
+    return false;
 }

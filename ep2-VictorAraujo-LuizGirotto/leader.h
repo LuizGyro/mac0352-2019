@@ -17,4 +17,5 @@ int leader();
 
 void *communist_leader( void *args);
 
+bool nextLeader();
 #endif

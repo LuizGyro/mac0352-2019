@@ -167,8 +167,10 @@ work(void *args) {
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons( IMMORTAL_PORT);
 
-    /* Get immortal ip from config */
-    //inet_pton( AF_INET, argv[1], &servaddr.sin_addr);
+    if (inet_pton( AF_INET, getImmortalIP(), &servaddr.sin_addr != 1){
+        fprintf(stderr, "ERROR: Some problem with inet_pton\n");
+        exit( EXIT_FAILURE);
+    }
 
     connect( sockfd, (struct sockaddr *) &servaddr, sizeof( servaddr));
     /* Send work to immortal */
