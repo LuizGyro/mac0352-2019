@@ -32,7 +32,7 @@ The following is a list of example interactions of this system:
 
 > Heartbeat:
 	> Immortal sends 103 to each known connected machine. For each, he waits a x00 response, whilst a timer runs. If no response is obtained before timeout,
-	  the computer is assumed disconnected.
+	  the computer is assumed disconnected. If response is obtained, the machine then sends its IP to immortal.
 	> Sends 004 to current leader.
 	> Recieves positive (100) or negative (111 or timeout) response.
 		> If positive response, sends alive list
