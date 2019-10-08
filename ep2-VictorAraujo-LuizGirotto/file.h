@@ -1,11 +1,17 @@
 #ifndef __FILE_H__
 #define __FILE_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <limits.h>
+
+#define MAX 5
+
 int getMinInd ( long long int *arr, int n);
 
 void fkmerge( char *out_name, char **files, int n);
-
-static int cmpll( const void *addr_1, const void *addr_2);
 
 void orderFile( char *in_name, char *out_name);
 

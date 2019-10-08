@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 
+
 #define LISTENQ 1
 #define MAXDATASIZE 100
 #define MAXLINE 4096
@@ -26,6 +27,8 @@ worker() {
     FILE *fd;
     char buffer[MAXLINE];
     char work_number[MAXLINE];
+    char ip[INET_ADDRSTRLEN];
+
 
     bool work_left = true;
     bool work_done = true;
@@ -35,8 +38,16 @@ worker() {
         fprintf( stderr, "ERROR: Could not allocate memory\n");
         exit( EXIT_FAILURE);
     }
-    pthread_mutex_t *work_done_mutex;
-    pthread_t *thread;
+    pthread_mutex_t *work_done_mutex = malloc( sizeof( pthread_mutex_t));
+    if (work_done_mutex == NULL) {
+        fprintf( stderr, "ERROR: Could not allocate memory\n");
+        exit( EXIT_FAILURE);
+    }
+    pthread_t *thread = malloc ( sizeof( pthread_t));
+    if (thread == NULL) {
+        fprintf( stderr, "ERROR: Could not allocate memory\n");
+        exit( EXIT_FAILURE);
+    }
 
     if (pthread_mutex_init( work_done_mutex, NULL)) {
         fprintf( stderr, "ERROR: Could not initialize mutex\n");
@@ -49,7 +60,6 @@ worker() {
     /*Só roubei do EP01*/
     int listenfd, connfd;
     struct sockaddr_in servaddr;
-    pid_t childpid;
     char recvline[MAXLINE + 1];
     ssize_t n;
 
@@ -61,7 +71,7 @@ worker() {
     bzero( &servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port        = htons(atoi(argv[1]));
+    servaddr.sin_port        = htons(WORKER_PORT);
 
     if ((bind( listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)) {
         fprintf( stderr, "ERROR: Could not bind socket, %s\n", strerror( errno));
@@ -96,14 +106,14 @@ worker() {
                 strncat( buffer, work_number, MAXLINE * sizeof( char));
                 strncat( buffer, ".txt", MAXLINE * sizeof( char));
 
-                if (fd = fopen( buffer, "w")) == NULL) {
+                if ((fd = fopen( buffer, "w")) == NULL) {
                     fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
                     write( connfd, "211\r\n", 5 * sizeof( char));
                     exit( EXIT_FAILURE);
                 }
                 write( connfd, "200\r\n", 5 * sizeof( char));
                 while ((read( connfd, buffer, MAXLINE)) > 0) {
-                    fprintf( fl, "%s", buffer);
+                    fprintf( fd, "%s", buffer);
                 }
                 fclose( fd);
                 if (pthread_create( thread, NULL, work, arg)) {
@@ -116,8 +126,9 @@ worker() {
             pthread_mutex_unlock( work_done_mutex);
         }
         else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
-            /*Esse seria o broadcast, muda o que ele escreve para se o IP*/
-            printf( "To vivo porra\n");
+            getIP( ip, sizeof( ip));
+            write( connfd, "203\r\n", 5 * sizeof( char));
+            write( connfd, ip, sizeof( ip));
         }
         close( connfd);
     }
@@ -155,17 +166,45 @@ work(void *args) {
 
     if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) < 0)
 
-    bzero( &servaddr, sizeof(servaddr));
+    bzero( &servaddr, sizeof( servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(13);
+    servaddr.sin_port = htons( IMMORTAL_PORT);
 
-    inet_pton( AF_INET, argv[1], &servaddr.sin_addr);
+    /* Get immortal ip from config */
+    //inet_pton( AF_INET, argv[1], &servaddr.sin_addr);
 
     connect( sockfd, (struct sockaddr *) &servaddr, sizeof( servaddr));
+    /* Send work to immortal */
+    write( sockfd, "212\r\n", 5 * sizeof( char));
+    n = read( sockfd, recvline, MAXLINE);
+    recvline[n] = 0;
+    /* Can receive either 000 or 011. Retry if 011 */
+    while (!strncmp( recvline, "011\r\n", 5 * sizeof( char))) {
+        printf("Esperando imortal estar disponivel...\n");
+        n = read( sockfd, recvline, MAXLINE);
+        recvline[n] = 0;
+    }
+    FILE *fd;
+    char *big_buffer;
+    struct stat *file_mdata = malloc( sizeof( struct stat));
+    fd = fopen( out, "r");
+    stat( out, file_mdata);
+    big_buffer = malloc( file_mdata->st_size);
+    fread( big_buffer, 1, file_mdata->st_size, fd);
+    write( sockfd, big_buffer, strlen( big_buffer));
+    free( big_buffer);
+    free( file_mdata);
+    fclose( fd);
+
     close( sockfd);
 
     pthread_mutex_lock( arg->work_done_mutex);
     *(arg->work_done) = true;
     pthread_mutex_unlock( arg->work_done_mutex);
-    return;
+    return NULL;
+}
+
+int main() {
+    printf( "Hello world\n");
+    return 0;
 }

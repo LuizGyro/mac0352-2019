@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-
-#define MAX 5
+#include "file.h"
 
 int
 getMinInd( long long int *arr, int n) {

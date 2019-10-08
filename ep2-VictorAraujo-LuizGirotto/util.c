@@ -20,7 +20,7 @@
 #include <sys/ioctl.h>
 
 int
-getHostIP ( char *ip, int ipsize) {
+getIP ( char *ip, int ipsize) {
     int s;
     struct ifconf ifconf;
     struct ifreq ifr[50];
