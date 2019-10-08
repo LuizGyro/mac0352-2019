@@ -19,4 +19,10 @@ FILE *newFile( FILE *fd, int file_number);
 
 int splitFiles( char *file_name);
 
+void makeFileNameIn(int wk_number, char *in);
+
+void makeFileNameOut(int work_number, char *out);
+
+void sendFile( char *out, int sockfd);
+
 #endif

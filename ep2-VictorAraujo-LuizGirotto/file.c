@@ -147,6 +147,43 @@ splitFiles( char *file_name) {
     return file_number;
 }
 
+void
+makeFileNameIn(int wk_number, char *in) {
+    char work_number[1000];
+    strncpy( in, "splitIn", 1000 * sizeof( char));
+    snprintf( work_number, 1000 * sizeof( char), "%d", wk_number);
+    strncat( in, work_number, 1000 * sizeof( char));
+    strncat( in, ".txt", 1000 * sizeof( char));
+    return;
+}
+
+void
+makeFileNameOut(int work_number, char *out) {
+    char work_number[1000];
+    strncpy( out, "splitOut", 1000 * sizeof( char));
+    snprintf( work_number, 1000 * sizeof( char), "%d", wk_number);
+    strncat( out, work_number, 1000 * sizeof( char));
+    strncat( out, ".txt", 1000 * sizeof( char));
+    return;
+}
+
+void
+sendFile( char *out, int sockfd) {
+    FILE *fd;
+    char *big_buffer;
+    struct stat *file_mdata = malloc( sizeof( struct stat));
+    fd = fopen( out, "r");
+    stat( out, file_mdata);
+    big_buffer = malloc( file_mdata->st_size);
+
+    fread( big_buffer, 1, file_mdata->st_size, fd);
+    write( sockfd, big_buffer, strlen( big_buffer));
+
+    free( big_buffer);
+    free( file_mdata);
+    fclose( fd);
+}
+
 /* void orderAllFiles( int n, char **bob) {
     int i = 0;
     char *name_in = malloc( 200 * sizeof( char));

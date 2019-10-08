@@ -33,7 +33,7 @@ leader() {
     celula_ip *alive_list = malloc( sizeof( celula_ip));
     celula_n *work_list malloc( sizeof( celula_n));
     pthread_mutex_t *work_list_mutex = malloc( sizeof( pthread_mutex_t));
-    pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t))
+    pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
 
     bool is_leader = true;
     bool receiving_jobs = true;
@@ -112,12 +112,12 @@ leader() {
             is_leader = false;
         }
         else if (!strncmp( recvline, "004\r\n", 5 * sizeof( char))) {
-            /*LIMPA A LISTA*/
+            limpa( alive_list);
             write( connfd, "100\r\n", 5 * sizeof( char));
             while ((read( connfd, buffer, MAXLINE)) > 0) {
-                /*MUTEX*/
+                pthread_mutex_lock( alive_list_mutex);
                 insere (buffer, alive_list);
-                /*MUTEX*/
+                pthread_mutex_unlock( alive_list_mutex);
             }
         }
         /*recebe um arquivo de trabalho*/
@@ -127,15 +127,13 @@ leader() {
 
             arg->work_number = atoi(buffer);
 
-            strncpy( buffer, "splitIn", MAXLINE * sizeof( char));
-            snprintf( work_number, MAXLINE * sizeof( char), "%d", arg->work_number);
-            strncat( buffer, work_number, MAXLINE * sizeof( char));
-            strncat( buffer, ".txt", MAXLINE * sizeof( char));
+            makeFileNameIn( arg->work_number, buffer);
 
             if ((fd = fopen( buffer, "w")) == NULL) {
                 fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
                 write( connfd, "111\r\n", 5 * sizeof( char));
-                /*LIMPA AS LISTAS*/
+                limpa( alive_list);
+                limpa( work_list);
                 free( alive_list);
                 free( work_list);
                 pthread_mutex_destroy( work_list_mutex);
@@ -162,7 +160,8 @@ leader() {
         close( connfd);
     }
 
-    /*LIMPA AS LISTAS*/
+    limpa( alive_list);
+    limpa( work_list);
     free( alive_list);
     free( work_list);
     pthread_mutex_destroy( work_list_mutex);
@@ -178,7 +177,10 @@ void *
 communist_leader( void *args) {
     int sockfd_im, n;
     char recvline[MAXLINE + 1];
+    char buffer[MAXLINE];
     struct sockaddr_in servaddr_im;
+
+    leader_args *arg = (leader_args *) args;
 
     if ((sockfd_im = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
@@ -206,10 +208,41 @@ communist_leader( void *args) {
 
 
     while (true) {
-        if (work_list->prox != NULL) {
-            /* Manda trabalho pra quem ta vivo */
+        if (arg->work_list->prox != NULL) {
+            /* Manda trabalho um pra quem ta vivo */
+
+            /* Acha alguém que quer trabalhar*/
+            celula_ip *p;
+            p = arg->alive_list->prox;
+            while (p != NULL) {
+                if (!inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr)) {
+                  perror( "inet_pton");
+                  exit( EXIT_FAILURE);
+                }
+                /* Fazer timeout deste socket ser mais curto do que o normal */
+                if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
+                    fprintf( stderr,"Failed to connect do worker.\n");
+                }
+
+                else {
+                    write(sockfd_wk, "102\r\n", 5 * sizeof( char));
+                    read( sockfd_wk, buffer, MAXLINE);
+                    if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
+                        snprintf( buffer, MAXLINE, "%d", arg->work_list->prox->wnum);
+                        write( sockfd_wk, buffer, sizeof( buffer));
+                        read( sockfd_wk, buffer, MAXLINE);
+                        if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
+                            makeFileNameIn( arg->work_list->prox->wnum, buffer);
+                            sendFile( buffer, sockfd_wk);
+                            busca_e_remove( arg->work_list->prox->wnum, arg->work_list);
+                            break;
+                        }
+                    }
+                }
+                p = p->prox;
+            }
         }
-        else if (!receiving_jobs) {
+        else if (*(arg->receiving_jobs) == false) {
             /* Decide se vai pedir trabalho pro imortal, ou se vai */
             /* deixar de ser lider */
         }

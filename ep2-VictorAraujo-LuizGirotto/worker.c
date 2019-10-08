@@ -30,6 +30,8 @@ worker() {
     char ip[INET_ADDRSTRLEN];
 
 
+    pid_t leader_pid;
+
     bool work_left = true;
     bool work_done = true;
 
@@ -73,7 +75,7 @@ worker() {
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port        = htons(WORKER_PORT);
 
-    if ((bind( listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)) {
+    if ((bind( listenfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) == -1)) {
         fprintf( stderr, "ERROR: Could not bind socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -86,13 +88,15 @@ worker() {
 
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
-            fprintf(stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
+            fprintf( stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
             continue;
         }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
         if (!strncmp( recvline, "001\r\n", 5 * sizeof( char))) {
-            printf("SOU O LIDER PORRA\n");
+            if ((leader_pid = fork()) == 0) {
+                leader();
+            }
         }
         else if (!strncmp( recvline, "102\r\n", 5 * sizeof( char))) {
             pthread_mutex_lock( work_done_mutex);
@@ -100,11 +104,7 @@ worker() {
                 write( connfd, "200\r\n", 5 * sizeof( char));
                 read( connfd, buffer, MAXLINE);
                 arg->work_number = atoi(buffer);
-
-                strncpy( buffer, "splitIn", MAXLINE * sizeof( char));
-                snprintf( work_number, MAXLINE * sizeof( char), "%d", arg->work_number);
-                strncat( buffer, work_number, MAXLINE * sizeof( char));
-                strncat( buffer, ".txt", MAXLINE * sizeof( char));
+                makeFileNameIn( arg->work_number, buffer);
 
                 if ((fd = fopen( buffer, "w")) == NULL) {
                     fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
@@ -149,14 +149,8 @@ work(void *args) {
     *(arg->work_done) = false;
     pthread_mutex_unlock( arg->work_done_mutex);
 
-    strncpy( in, "splitIn", 1000 * sizeof( char));
-    strncpy( out, "splitOut", 1000 * sizeof( char));
-    snprintf( work_number, 10000 * sizeof( char), "%d", arg->work_number);
-    strncat( in, work_number, 1000 * sizeof( char));
-    strncat( out, work_number, 1000 * sizeof( char));
-    strncat( in, ".txt", 1000 * sizeof( char));
-    strncat( out, ".txt", 1000 * sizeof( char));
-
+    makeFileNameIn( arg->work_number, in);
+    makeFileNameOut( arg->work_number, out);
     orderFile( in, out);
 
     /*Mandar pro lider o trabalho*/
@@ -187,18 +181,8 @@ work(void *args) {
         n = read( sockfd, recvline, MAXLINE);
         recvline[n] = 0;
     }
-    FILE *fd;
-    char *big_buffer;
-    struct stat *file_mdata = malloc( sizeof( struct stat));
-    fd = fopen( out, "r");
-    stat( out, file_mdata);
-    big_buffer = malloc( file_mdata->st_size);
-    fread( big_buffer, 1, file_mdata->st_size, fd);
-    write( sockfd, big_buffer, strlen( big_buffer));
-    free( big_buffer);
-    free( file_mdata);
-    fclose( fd);
 
+    sendFile( out, sockfd);
     close( sockfd);
 
     pthread_mutex_lock( arg->work_done_mutex);
