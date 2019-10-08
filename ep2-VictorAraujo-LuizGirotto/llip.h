@@ -12,4 +12,6 @@ void insere (char ip, celula_ip *p);
 
 void busca_e_remove (char ip, celula_ip *le);
 
+void limpa (celula_ip *le);
+
 #endif

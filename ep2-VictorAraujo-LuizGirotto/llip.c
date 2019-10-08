@@ -31,3 +31,15 @@ void busca_e_remove (char *ip, celula_ip *le) {
       free (q);
    }
 }
+
+void limpa (celula_ip *le) {
+    celula_ip *p, *q;
+    p = le->prox;
+    q = p->prox;
+    while (q != NULL) {
+        free(p);
+        p = q;
+        q = q->prox;
+    }
+    free(p);
+}

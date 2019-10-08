@@ -12,4 +12,6 @@ void insere (int n, celula_n *p);
 
 void busca_e_remove (int n, celula_n *le);
 
+void limpa (celula_n *le);
+
 #endif

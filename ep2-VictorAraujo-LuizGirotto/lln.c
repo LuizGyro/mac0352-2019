@@ -31,3 +31,15 @@ void busca_e_remove (int n, celula_n *le) {
       free (q);
    }
 }
+
+void limpa (celula_n *le) {
+    celula_n *p, *q;
+    p = le->prox;
+    q = p->prox;
+    while (q != NULL) {
+        free(p);
+        p = q;
+        q = q->prox;
+    }
+    free(p);
+}
