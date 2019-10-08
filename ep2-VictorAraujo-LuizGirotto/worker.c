@@ -28,11 +28,21 @@ worker() {
     char work_number[MAXLINE];
 
     bool work_left = true;
-    bool work_done = false;
-    work_args arg;
+    bool work_done = true;
+
+    work_args *arg = malloc( sizeof( work_args));
+    if (arg == NULL) {
+        fprintf( stderr, "ERROR: Could not allocate memory\n");
+        exit( EXIT_FAILURE);
+    }
     pthread_mutex_t *work_done_mutex;
     pthread_t *thread;
-    pthread_mutex_init( work_done_mutex, NULL);
+
+    if (pthread_mutex_init( work_done_mutex, NULL)) {
+        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        exit( EXIT_FAILURE);
+    }
+
     arg->work_done_mutex = work_done_mutex;
     arg->work_done = &work_done;
 
@@ -43,27 +53,38 @@ worker() {
     char recvline[MAXLINE + 1];
     ssize_t n;
 
-
-    listenfd = socket( AF_INET, SOCK_STREAM, 0));
+    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
 
     bzero( &servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port        = htons(atoi(argv[1]));
-    bind( listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-    listen( listenfd, LISTENQ);
+    if ((bind( listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)) {
+        fprintf( stderr, "ERROR: Could not bind socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
+
+    if (listen( listenfd, LISTENQ) == -1) {
+        fprintf( stderr, "ERROR: Could not listen on port, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
     /*Fim do roubo*/
 
     while (work_left) {
-        connfd = accept( listenfd, (struct sockaddr *) NULL, NULL));
+        if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
+            fprintf(stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
+            continue;
+        }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
-        if (!strncmp( recvline, "001", 3 * sizeof( char))) {
-            /*Precisa fazer o fork e chamar a função lider*/
+        if (!strncmp( recvline, "001\r\n", 5 * sizeof( char))) {
             printf("SOU O LIDER PORRA\n");
         }
-        else if (!strncmp( recvline, "102", 3 * sizeof( char))) {
+        else if (!strncmp( recvline, "102\r\n", 5 * sizeof( char))) {
             pthread_mutex_lock( work_done_mutex);
             if (work_done) {
                 write( connfd, "200\r\n", 5 * sizeof( char));
@@ -75,27 +96,34 @@ worker() {
                 strncat( buffer, work_number, MAXLINE * sizeof( char));
                 strncat( buffer, ".txt", MAXLINE * sizeof( char));
 
-                fd = fopen( buffer, "w")) == NULL;
+                if (fd = fopen( buffer, "w")) == NULL) {
+                    fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
+                    write( connfd, "211\r\n", 5 * sizeof( char));
+                    exit( EXIT_FAILURE);
+                }
+                write( connfd, "200\r\n", 5 * sizeof( char));
                 while ((read( connfd, buffer, MAXLINE)) > 0) {
                     fprintf( fl, "%s", buffer);
                 }
                 fclose( fd);
-                pthread_create( thread, NULL, work, arg);
+                if (pthread_create( thread, NULL, work, arg)) {
+                    fprintf(stderr, "ERROR: Could not create thread\n");
+                }
             }
             else {
                 write( connfd, "210\r\n", 5 * sizeof( char));
             }
             pthread_mutex_unlock( work_done_mutex);
         }
-        else if (!strncmp( recvline, "003", 3 * sizeof( char))) {
-            /*Ta vivo ?*/
+        else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
             /*Esse seria o broadcast, muda o que ele escreve para se o IP*/
-            write( connfd, "200\r\n", 5 * sizeof( char));
+            printf( "To vivo porra\n");
         }
         close( connfd);
     }
 
-    return 0;
+    pthread_mutex_destroy( work_done_mutex);
+    exit( EXIT_SUCCESS);
 }
 
 
@@ -106,6 +134,10 @@ work(void *args) {
     char in[1000];
     char out[1000];
 
+    pthread_mutex_lock( arg->work_done_mutex);
+    *(arg->work_done) = false;
+    pthread_mutex_unlock( arg->work_done_mutex);
+
     strncpy( in, "splitIn", 1000 * sizeof( char));
     strncpy( out, "splitOut", 1000 * sizeof( char));
     snprintf( work_number, 10000 * sizeof( char), "%d", arg->work_number);
@@ -115,8 +147,6 @@ work(void *args) {
     strncat( out, ".txt", 1000 * sizeof( char));
 
     orderFile( in, out);
-
-
 
     /*Mandar pro lider o trabalho*/
     int sockfd, n;
