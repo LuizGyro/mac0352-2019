@@ -1,0 +1,19 @@
+Messages are made up of three-digit codes. Let us define a generic code as "xyz".
+
+x represents the sender of the message.
+	> 0 = immortal
+	> 1 = leader
+	> 2 = worker
+
+y and z represent the contents of the message. Messages are sender-sensite, which means that the meaning of the "yz" part of the message can change
+depending on the x part of the message.
+The following is a list of all messages available on this system:
+
+000, 100, 200 - OK
+
+001 - Sent to newly determined leader
+003 - Sent to check if process is alive
+
+102 - Requesting work
+
+210 - Working
