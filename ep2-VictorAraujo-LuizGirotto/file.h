@@ -7,6 +7,10 @@
 #include <errno.h>
 #include <limits.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #define MAX 5
 
 int getMinInd ( long long int *arr, int n);

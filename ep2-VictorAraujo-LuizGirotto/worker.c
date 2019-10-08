@@ -26,7 +26,6 @@ int
 worker() {
     FILE *fd;
     char buffer[MAXLINE];
-    char work_number[MAXLINE];
     char ip[INET_ADDRSTRLEN];
 
 
@@ -141,7 +140,6 @@ worker() {
 void *
 work(void *args) {
     work_args *arg = (work_args *) args;
-    char work_number[1000];
     char in[1000];
     char out[1000];
 
@@ -167,7 +165,7 @@ work(void *args) {
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons( IMMORTAL_PORT);
 
-    if (inet_pton( AF_INET, getImmortalIP(), &servaddr.sin_addr != 1){
+    if (inet_pton( AF_INET, getImmortalIP(), &servaddr.sin_addr) != 1){
         fprintf(stderr, "ERROR: Some problem with inet_pton\n");
         exit( EXIT_FAILURE);
     }

@@ -158,7 +158,7 @@ makeFileNameIn(int wk_number, char *in) {
 }
 
 void
-makeFileNameOut(int work_number, char *out) {
+makeFileNameOut(int wk_number, char *out) {
     char work_number[1000];
     strncpy( out, "splitOut", 1000 * sizeof( char));
     snprintf( work_number, 1000 * sizeof( char), "%d", wk_number);

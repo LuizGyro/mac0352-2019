@@ -7,6 +7,7 @@
 
 #include "file.h"
 #include "util.h"
+#include "leader.h"
 
 typedef struct _work_args {
     pthread_mutex_t *work_done_mutex;

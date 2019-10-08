@@ -14,10 +14,6 @@
 #include <unistd.h>
 
 #include <sys/stat.h>
-#include <stdbool.h>
-
-#include "llip.h"
-#include "lln.h"
 
 
 #define LISTENQ 1
@@ -32,7 +28,7 @@ leader() {
     int work_number;
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
-    celula_n *work_list malloc( sizeof( celula_n));
+    celula_n *work_list = malloc( sizeof( celula_n));
     pthread_mutex_t *work_list_mutex = malloc( sizeof( pthread_mutex_t));
     pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
 
@@ -113,11 +109,11 @@ leader() {
             is_leader = false;
         }
         else if (!strncmp( recvline, "004\r\n", 5 * sizeof( char))) {
-            limpa( alive_list);
+            limpa_llip( alive_list);
             write( connfd, "100\r\n", 5 * sizeof( char));
             while ((read( connfd, buffer, MAXLINE)) > 0) {
                 pthread_mutex_lock( alive_list_mutex);
-                insere (buffer, alive_list);
+                insere_llip( buffer, alive_list);
                 pthread_mutex_unlock( alive_list_mutex);
             }
         }
@@ -134,8 +130,8 @@ leader() {
                 /*LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)*/
                 fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
                 write( connfd, "111\r\n", 5 * sizeof( char));
-                limpa( alive_list);
-                limpa( work_list);
+                limpa_llip( alive_list);
+                limpa_lln( work_list);
                 free( alive_list);
                 free( work_list);
                 pthread_mutex_destroy( work_list_mutex);
@@ -152,7 +148,7 @@ leader() {
             }
             fclose( fd);
             pthread_mutex_lock( work_list_mutex);
-            insere( work_number, work_list);
+            insere_lln( work_number, work_list);
             pthread_mutex_unlock( work_list_mutex);
         }
         /*Não vai mais receber trabalho*/
@@ -162,8 +158,8 @@ leader() {
         close( connfd);
     }
 
-    limpa( alive_list);
-    limpa( work_list);
+    limpa_llip( alive_list);
+    limpa_lln( work_list);
     free( alive_list);
     free( work_list);
     pthread_mutex_destroy( work_list_mutex);
@@ -176,8 +172,7 @@ leader() {
 
 void *
 communist_leader( void *args) {
-    int sockfd_im, n;
-    char recvline[MAXLINE + 1];
+    int sockfd_im;
     char buffer[MAXLINE];
     struct sockaddr_in servaddr_im;
     bool alive = true;
@@ -193,7 +188,7 @@ communist_leader( void *args) {
     servaddr_im.sin_family = AF_INET;
     servaddr_im.sin_port = htons( IMMORTAL_PORT);
 
-    if (inet_pton( AF_INET, getImmortalIP(), &servaddr_im.sin_addr != 1){
+    if (inet_pton( AF_INET, getImmortalIP(), &servaddr_im.sin_addr) != 1){
         fprintf(stderr, "ERROR: Some problem with inet_pton\n");
         exit( EXIT_FAILURE);
     }
@@ -221,7 +216,7 @@ communist_leader( void *args) {
             pthread_mutex_lock( arg->alive_list_mutex);
             p = arg->alive_list->prox;
             while (p != NULL) {
-                if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr != 1)) {
+                if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr) != 1) {
                     perror( "inet_pton");
                     exit( EXIT_FAILURE);
                 }
@@ -234,13 +229,13 @@ communist_leader( void *args) {
                     write(sockfd_wk, "102\r\n", 5 * sizeof( char));
                     read( sockfd_wk, buffer, MAXLINE);
                     if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
-                        snprintf( buffer, MAXLINE, "%d", arg->work_list->prox->wnum);
+                        snprintf( buffer, MAXLINE, "%d", arg->work_list->prox->workn);
                         write( sockfd_wk, buffer, sizeof( buffer));
                         read( sockfd_wk, buffer, MAXLINE);
                         if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
-                            makeFileNameIn( arg->work_list->prox->wnum, buffer);
+                            makeFileNameIn( arg->work_list->prox->workn, buffer);
                             sendFile( buffer, sockfd_wk);
-                            busca_e_remove( arg->work_list->prox->wnum, arg->work_list);
+                            busca_e_remove_lln( arg->work_list->prox->workn, arg->work_list);
                             close( sockfd_wk);
                             break;
                         }
@@ -257,7 +252,7 @@ communist_leader( void *args) {
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
                     fprintf( stderr, "Failed to connect do worker.\n");
                 }
-                write( sockfd_im, "105\r\n", 5 * sizeof( char)));
+                write( sockfd_im, "105\r\n", 5 * sizeof( char));
                 alive = false;
                 close( sockfd_im);
             }
@@ -266,7 +261,7 @@ communist_leader( void *args) {
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
                     fprintf( stderr, "Failed to connect do worker.\n");
                 }
-                write( sockfd_im, "106\r\n", 5 * sizeof( char)));
+                write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 read( sockfd_im, buffer, MAXLINE);
                 if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
                     *(arg->receiving_jobs) = true;

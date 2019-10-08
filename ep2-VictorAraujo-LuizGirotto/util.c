@@ -61,7 +61,7 @@ char *getImmortalIP() {
     struct stat *file_mdata = malloc( sizeof( struct stat));
 
     conf = fopen( "ep02.conf", "r");
-    stat( conf, file_mdata);
+    stat( "ep02.conf", file_mdata);
     ip = malloc( file_mdata->st_size);
     fread( ip, 1, file_mdata->st_size, conf);
     return ip;
