@@ -10,10 +10,13 @@ depending on the x part of the message.
 The following is a list of all messages available on this system:
 
 000, 100, 200 - OK
+011, 111, 211 - NOT OK
 
-001 - Sent to newly determined leader
+001 - Sent to newly promoted worker (turned into leader)
+002 - Sent to newly demoted leader (turned into simple worker)
 003 - Sent to check if process is alive
 
-102 - Requesting work
+102 - Work request
 
 210 - Working
+212 - Work done
