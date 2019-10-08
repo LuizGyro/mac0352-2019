@@ -164,7 +164,10 @@ work(void *args) {
     char recvline[MAXLINE + 1];
     struct sockaddr_in servaddr;
 
-    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) < 0)
+    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
 
     bzero( &servaddr, sizeof( servaddr));
     servaddr.sin_family = AF_INET;

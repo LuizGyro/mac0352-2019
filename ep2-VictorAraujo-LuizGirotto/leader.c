@@ -16,6 +16,9 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 
+#include "llip.h"
+#include "lln.h"
+
 
 #define LISTENQ 1
 #define MAXDATASIZE 100
@@ -26,9 +29,11 @@ leader() {
     FILE *fd;
     char buffer[MAXLINE];
     char work_number[MAXLINE];
+    celula_ip *alive_list;
+    celula_n *work_list;
 
     bool is_leader = true;
-    bool receiving_jobs = false;
+    bool receiving_jobs = true;
 
     int listenfd, connfd;
     struct sockaddr_in servaddr;
@@ -105,4 +110,48 @@ leader() {
     close( listenfd);
     exit( EXIT_SUCCESS);
 
+}
+
+void *
+communist_leader( void *args) {
+    int sockfd_im, n;
+    char recvline[MAXLINE + 1];
+    struct sockaddr_in servaddr_im;
+
+    if ((sockfd_im = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
+
+    bzero( &servaddr_im, sizeof( servaddr_im));
+    servaddr_im.sin_family = AF_INET;
+    servaddr_im.sin_port = htons( IMMORTAL_PORT);
+
+    /* Get immortal ip from config */
+    //inet_pton( AF_INET, argv[1], &servaddr.sin_addr);
+
+    int sockfd_wk;
+    struct sockaddr_in servaddr_wk;
+
+    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
+
+    bzero( &servaddr_wk, sizeof( servaddr_wk));
+    servaddr_wk.sin_family = AF_INET;
+    servaddr_wk.sin_port = htons( WORKER_PORT);
+
+
+    while (true) {
+        if (work_list != NULL) {
+            /* Manda trabalho pra quem ta vivo */
+        }
+        else if (receiving_jobs) {
+            /* Decide se vai pedir trabalho pro imortal, ou se vai */
+            /* deixar de ser lider */
+        }
+    }
+
+    return NULL;
 }
