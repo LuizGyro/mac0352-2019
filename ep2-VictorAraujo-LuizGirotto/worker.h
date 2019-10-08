@@ -13,6 +13,6 @@ typedef struct _work_args {
     int work_number;
 } work_args;
 
-void work(void *args);
+void *work(void *args);
 
 #endif

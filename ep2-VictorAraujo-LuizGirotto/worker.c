@@ -20,15 +20,21 @@
 #define MAXDATASIZE 100
 #define MAXLINE 4096
 
-#define MINPORT 2000
-#define MAXPORT 8000
 
 int
 worker() {
-    bool all_is_done = false;
+    FILE *fd;
+    char buffer[MAXLINE];
+    char work_number[MAXLINE];
+
+    bool work_left = true;
     bool work_done = false;
+    work_args arg;
     pthread_mutex_t *work_done_mutex;
+    pthread_t *thread;
     pthread_mutex_init( work_done_mutex, NULL);
+    arg->work_done_mutex = work_done_mutex;
+    arg->work_done = &work_done;
 
     /*Só roubei do EP01*/
     int listenfd, connfd;
@@ -38,62 +44,62 @@ worker() {
     ssize_t n;
 
 
-    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        perror( "socket :(\n");
-        exit( 2);
-    }
+    listenfd = socket( AF_INET, SOCK_STREAM, 0));
 
     bzero( &servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port        = htons(atoi(argv[1]));
-    if (bind( listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
-        perror( "bind :(\n");
-        exit( 3);
-    }
+    bind( listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
 
-    if (listen( listenfd, LISTENQ) == -1) {
-        perror( "listen :(\n");
-        exit( 4);
-    }
+    listen( listenfd, LISTENQ);
     /*Fim do roubo*/
 
-    while (all_is_done) {
-        if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1 ) {
-            perror( "accept :(\n");
-            exit( 5);
+    while (work_left) {
+        connfd = accept( listenfd, (struct sockaddr *) NULL, NULL));
+        n = read( connfd, recvline, MAXLINE);
+        recvline[n] = 0;
+        if (!strncmp( recvline, "001", 3 * sizeof( char))) {
+            /*Precisa fazer o fork e chamar a função lider*/
+            printf("SOU O LIDER PORRA\n");
         }
-        if ((childpid = fork()) == 0) {
-            close( listenfd);
-            n = read( connfd, recvline, MAXLINE);
-            recvline[n] = 0;
-            /*
-             * Agora é ler a mensagem e ver o que fazer.
-            */
-            if (!strncmp( recvline, "001", 3 * sizeof( char))) {
-                printf("SOU O LIDER PORRA\n");
-            }
-            else if (!strncmp( recvline, "002", 3 * sizeof( char))) {
-                printf("Posso trampar ?");
-                pthread_mutex_lock( work_done_mutex);
-                if (work_done) {
-                    write( connfd, "204\r\n", 5 * sizeof( char));
-                }
-                else {
-                    write( connfd, "201\r\n", 5 * sizeof( char));
-                }
-                pthread_mutex_unlock( work_done_mutex);
+        else if (!strncmp( recvline, "102", 3 * sizeof( char))) {
+            pthread_mutex_lock( work_done_mutex);
+            if (work_done) {
+                write( connfd, "200\r\n", 5 * sizeof( char));
+                read( connfd, buffer, MAXLINE);
+                arg->work_number = atoi(buffer);
 
+                strncpy( buffer, "splitIn", MAXLINE * sizeof( char));
+                snprintf( work_number, MAXLINE * sizeof( char), "%d", arg->work_number);
+                strncat( buffer, work_number, MAXLINE * sizeof( char));
+                strncat( buffer, ".txt", MAXLINE * sizeof( char));
+
+                fd = fopen( buffer, "w")) == NULL;
+                while ((read( connfd, buffer, MAXLINE)) > 0) {
+                    fprintf( fl, "%s", buffer);
+                }
+                fclose( fd);
+                pthread_create( thread, NULL, work, arg);
             }
-            exit( 0);
+            else {
+                write( connfd, "210\r\n", 5 * sizeof( char));
+            }
+            pthread_mutex_unlock( work_done_mutex);
         }
+        else if (!strncmp( recvline, "003", 3 * sizeof( char))) {
+            /*Ta vivo ?*/
+            /*Esse seria o broadcast, muda o que ele escreve para se o IP*/
+            write( connfd, "200\r\n", 5 * sizeof( char));
+        }
+        close( connfd);
     }
 
     return 0;
 }
 
 
-void
+void *
 work(void *args) {
     work_args *arg = (work_args *) args;
     char work_number[1000];
@@ -110,9 +116,26 @@ work(void *args) {
 
     orderFile( in, out);
 
+
+
+    /*Mandar pro lider o trabalho*/
+    int sockfd, n;
+    char recvline[MAXLINE + 1];
+    struct sockaddr_in servaddr;
+
+    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) < 0)
+
+    bzero( &servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(13);
+
+    inet_pton( AF_INET, argv[1], &servaddr.sin_addr);
+
+    connect( sockfd, (struct sockaddr *) &servaddr, sizeof( servaddr));
+    close( sockfd);
+
     pthread_mutex_lock( arg->work_done_mutex);
     *(arg->work_done) = true;
     pthread_mutex_unlock( arg->work_done_mutex);
-    /*Mandar pro lider o trabalho*/
     return;
 }
