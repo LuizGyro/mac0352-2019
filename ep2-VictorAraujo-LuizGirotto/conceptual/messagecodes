@@ -1,0 +1,50 @@
+Messages are made up of three-digit codes. Let us define a generic code as "xyz".
+
+x represents the sender of the message.
+	> 0 = immortal
+	> 1 = leader
+	> 2 = worker
+
+y and z represent the contents of the message. Messages are sender-sensite, which means that the meaning of the "yz" part of the message can change
+depending on the x part of the message.
+
+
+
+The following is a list of all messages available on this system:
+
+000, 100, 200 - OK
+011, 111, 211 - NOT OK
+
+001 - Sent to newly promoted worker (turned into leader)
+002 - Sent to newly demoted leader (turned into simple worker)
+003 - Sent to check if process is alive
+004 - Sending alive processes list
+
+102 - Work request
+103 - Election request
+
+210 - Working
+212 - Work done
+
+
+
+The following is a list of example interactions of this system:
+
+> Heartbeat:
+	> Immortal sends 103 to each known connected machine. For each, he waits a x00 response, whilst a timer runs. If no response is obtained before timeout,
+	  the computer is assumed disconnected.
+	> Sends 004 to current leader.
+	> Recieves positive (100) or negative (111 or timeout) response.
+		> If positive response, sends alive list
+		> If negative response, decides on new leader out of alive machines, and sends 001 to it
+
+> Election by request:
+	> Leader sends 103 to immortal
+	> Immortal decides on new leader out of alive machines, and sends 001 to it
+
+> Worker finishes some work
+	> Worker sends 212 to immortal
+	> Immortal sends positive (000) or negative (011) response.
+		> If positive response, sends work to immortal
+		> If negative response, waits for some time, and repeats the process
+
