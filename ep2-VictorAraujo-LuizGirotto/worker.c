@@ -132,7 +132,7 @@ worker() {
         }
         close( connfd);
     }
-
+    close( listenfd);
     pthread_mutex_destroy( work_done_mutex);
     exit( EXIT_SUCCESS);
 }
