@@ -29,8 +29,11 @@ leader() {
     FILE *fd;
     char buffer[MAXLINE];
     char work_number[MAXLINE];
-    celula_ip *alive_list;
-    celula_n *work_list;
+
+    celula_ip *alive_list = malloc( sizeof( celula_ip));
+    celula_n *work_list malloc( sizeof( celula_n));
+    pthread_mutex_t *work_list_mutex = malloc( sizeof( pthread_mutex_t));
+    pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t))
 
     bool is_leader = true;
     bool receiving_jobs = true;
@@ -40,8 +43,33 @@ leader() {
     char recvline[MAXLINE + 1];
     ssize_t n;
 
+    if (pthread_mutex_init( work_list_mutex, NULL)) {
+        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        free( alive_list);
+        free( work_list);
+        free( work_list_mutex);
+        free( alive_list_mutex);
+        exit( EXIT_FAILURE);
+    }
+
+    if (pthread_mutex_init( alive_list_mutex, NULL)) {
+        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        free( alive_list);
+        free( work_list);
+        pthread_mutex_destroy( work_list_mutex);
+        free( work_list_mutex);
+        free( alive_list_mutex);
+        exit( EXIT_FAILURE);
+    }
+
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        free( alive_list);
+        free( work_list);
+        pthread_mutex_destroy( work_list_mutex);
+        free( work_list_mutex);
+        pthread_mutex_destroy( alive_list_mutex);
+        free( alive_list_mutex);
         exit( EXIT_FAILURE);
     }
 
@@ -52,11 +80,23 @@ leader() {
 
     if ((bind( listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1)) {
         fprintf( stderr, "ERROR: Could not bind socket, %s\n", strerror( errno));
+        free( alive_list);
+        free( work_list);
+        pthread_mutex_destroy( work_list_mutex);
+        free( work_list_mutex);
+        pthread_mutex_destroy( alive_list_mutex);
+        free( alive_list_mutex);
         exit( EXIT_FAILURE);
     }
 
     if (listen( listenfd, LISTENQ) == -1) {
         fprintf( stderr, "ERROR: Could not listen on port, %s\n", strerror( errno));
+        free( alive_list);
+        free( work_list);
+        pthread_mutex_destroy( work_list_mutex);
+        free( work_list_mutex);
+        pthread_mutex_destroy( alive_list_mutex);
+        free( alive_list_mutex);
         exit( EXIT_FAILURE);
     }
 
@@ -72,13 +112,19 @@ leader() {
             is_leader = false;
         }
         else if (!strncmp( recvline, "004\r\n", 5 * sizeof( char))) {
+            /*LIMPA A LISTA*/
             write( connfd, "100\r\n", 5 * sizeof( char));
-            /*recebe quem ta vivo*/
+            while ((read( connfd, buffer, MAXLINE)) > 0) {
+                /*MUTEX*/
+                insere (buffer, alive_list);
+                /*MUTEX*/
+            }
         }
         /*recebe um arquivo de trabalho*/
         else if (!strncmp( recvline, "005\r\n", 5 * sizeof( char))) {
             write( connfd, "100\r\n", 5 * sizeof( char));
             read( connfd, buffer, MAXLINE);
+
             arg->work_number = atoi(buffer);
 
             strncpy( buffer, "splitIn", MAXLINE * sizeof( char));
@@ -89,6 +135,13 @@ leader() {
             if ((fd = fopen( buffer, "w")) == NULL) {
                 fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
                 write( connfd, "111\r\n", 5 * sizeof( char));
+                /*LIMPA AS LISTAS*/
+                free( alive_list);
+                free( work_list);
+                pthread_mutex_destroy( work_list_mutex);
+                free( work_list_mutex);
+                pthread_mutex_destroy( alive_list_mutex);
+                free( alive_list_mutex);
                 close( connfd);
                 close( listenfd);
                 exit( EXIT_FAILURE);
@@ -98,7 +151,9 @@ leader() {
                 fprintf( fd, "%s", buffer);
             }
             fclose( fd);
-
+            /*colocar mutex*/
+            insere( arg->work_number, work_list);
+            /*mutex*/
         }
         /*Não vai mais receber trabalho*/
         else if (!strncmp( recvline, "006\r\n", 5 * sizeof( char))) {
@@ -107,6 +162,13 @@ leader() {
         close( connfd);
     }
 
+    /*LIMPA AS LISTAS*/
+    free( alive_list);
+    free( work_list);
+    pthread_mutex_destroy( work_list_mutex);
+    free( work_list_mutex);
+    pthread_mutex_destroy( alive_list_mutex);
+    free( alive_list_mutex);
     close( listenfd);
     exit( EXIT_SUCCESS);
 
@@ -144,10 +206,10 @@ communist_leader( void *args) {
 
 
     while (true) {
-        if (work_list != NULL) {
+        if (work_list->prox != NULL) {
             /* Manda trabalho pra quem ta vivo */
         }
-        else if (receiving_jobs) {
+        else if (!receiving_jobs) {
             /* Decide se vai pedir trabalho pro imortal, ou se vai */
             /* deixar de ser lider */
         }

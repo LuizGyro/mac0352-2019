@@ -5,4 +5,6 @@
 
 int leader();
 
+void *communist_leader( void *args);
+
 #endif
