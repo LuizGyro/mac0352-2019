@@ -19,7 +19,7 @@ immortal( int file_number, char **out_files) {
     char recvline[MAXLINE + 1];
     ssize_t n;
 
-    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -42,7 +42,7 @@ immortal( int file_number, char **out_files) {
     for (int i = 0; i < file_number; i++) {
         insere_lln( i, work_left_list);
     }
-
+    work_left = false;
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
             fprintf(stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -71,5 +71,8 @@ immortal( int file_number, char **out_files) {
     }
 
     free( work_left_list);
+    free( work_done_list);
+    free( current_work_list);
+    free( alive_list);
     return;
 }

@@ -64,7 +64,7 @@ worker() {
     char recvline[MAXLINE + 1];
     ssize_t n;
 
-    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -74,7 +74,7 @@ worker() {
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port        = htons(WORKER_PORT);
 
-    if ((bind( listenfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) == -1)) {
+    if (bind( listenfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) == -1) {
         fprintf( stderr, "ERROR: Could not bind socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -84,7 +84,6 @@ worker() {
         exit( EXIT_FAILURE);
     }
     /*Fim do roubo*/
-
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
             fprintf( stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -191,9 +190,4 @@ work(void *args) {
     *(arg->work_done) = true;
     pthread_mutex_unlock( arg->work_done_mutex);
     return NULL;
-}
-
-int main() {
-    printf( "Hello world\n");
-    return 0;
 }

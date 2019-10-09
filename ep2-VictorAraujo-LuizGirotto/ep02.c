@@ -6,7 +6,7 @@
 #include "lln.h"
 #include "llip.h"
 
-#define OUFILE "result.txt"
+#define OUTFILE "result.txt"
 
 int
 main( int argc, char **argv) {
@@ -18,6 +18,13 @@ main( int argc, char **argv) {
         else {
             int number_files = splitFiles( argv[1]);
             char **out_files = malloc( number_files * sizeof( char *));
+            
+            /*TIRAR ESSE FOR DESSE LUGAR*/
+            for (int i = 0; i < number_files; i++) {
+                out_files[i] = malloc( 1000 * sizeof( char));
+                makeFileNameIn( i, out_files[i]);
+            }
+
             immortal( number_files, out_files);
             fkmerge( OUTFILE, out_files, number_files);
             for (int i = 0; i < number_files; i++) {

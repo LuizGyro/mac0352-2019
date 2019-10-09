@@ -140,6 +140,7 @@ splitFiles( char *file_name) {
         fputs( buffer, fd2);
         lines++;
     }
+    file_number++;
 
     free( buffer);
     fclose( fd1);
