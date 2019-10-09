@@ -18,7 +18,7 @@ main( int argc, char **argv) {
         else {
             int number_files = splitFiles( argv[1]);
             char **out_files = malloc( number_files * sizeof( char *));
-            immortal( number_files);
+            immortal( number_files, out_files);
             fkmerge( OUTFILE, out_files, number_files);
             for (int i = 0; i < number_files; i++) {
                 free( out_files[i]);

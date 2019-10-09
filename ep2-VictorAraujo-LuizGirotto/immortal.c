@@ -1,11 +1,13 @@
 #include "immortal.h"
 
 void
-immortal( int file_number) {
+immortal( int file_number, char **out_files) {
 
     celula_n *work_left_list = malloc( sizeof( celula_n));
     celula_n *work_done_list = malloc( sizeof( celula_n));
+    celula_n *current_work_list = malloc( sizeof( celula_n));
 
+    celula_ip *alive_list = malloc( sizeof( celula_ip));
 
     bool work_left = true;
 
@@ -61,8 +63,10 @@ immortal( int file_number) {
                 fprintf( fd, "%s", buffer);
             }
             fclose( fd);
-            busca_e_remove_lln( work_number, work_left_list);
+            busca_e_remove_lln( work_number, current_work_list);
             insere_lln( work_number, work_done_list);
+            out_files[work_number] = malloc( sizeof( out));
+            strcpy(out_files[work_number], out);
         }
     }
 
