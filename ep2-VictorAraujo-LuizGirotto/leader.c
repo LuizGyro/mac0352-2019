@@ -22,10 +22,7 @@
 
 int
 leader() {
-    FILE *fd;
     char buffer[MAXLINE];
-
-    int work_number;
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
     celula_n *work_list = malloc( sizeof( celula_n));
@@ -35,7 +32,6 @@ leader() {
     pthread_t *thread = malloc( sizeof( pthread_t));
 
     bool is_leader = true;
-    bool receiving_jobs = true;
 
     int listenfd, connfd;
     struct sockaddr_in servaddr;
@@ -105,11 +101,10 @@ leader() {
     args->alive_list_mutex = alive_list_mutex;
     args->work_list = work_list;
     args->work_list_mutex = work_list_mutex;
-    args->receiving_jobs = &receiving_jobs;
 
     pthread_create( thread, NULL, communist_leader, args);
     while (is_leader) {
-        if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
+        if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf(stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
             continue;
         }
@@ -127,44 +122,6 @@ leader() {
                 insere_llip( buffer, alive_list);
                 pthread_mutex_unlock( alive_list_mutex);
             }
-        }
-        /*recebe um arquivo de trabalho*/
-        else if (!strncmp( recvline, "005\r\n", 5 * sizeof( char))) {
-            write( connfd, "100\r\n", 5 * sizeof( char));
-            read( connfd, buffer, MAXLINE);
-
-            work_number = atoi(buffer);
-
-            makeFileNameIn( work_number, buffer);
-
-            if ((fd = fopen( buffer, "w")) == NULL) {
-                /*LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)*/
-                fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
-                write( connfd, "111\r\n", 5 * sizeof( char));
-                limpa_llip( alive_list);
-                limpa_lln( work_list);
-                free( alive_list);
-                free( work_list);
-                pthread_mutex_destroy( work_list_mutex);
-                free( work_list_mutex);
-                pthread_mutex_destroy( alive_list_mutex);
-                free( alive_list_mutex);
-                close( connfd);
-                close( listenfd);
-                exit( EXIT_FAILURE);
-            }
-            write( connfd, "100\r\n", 5 * sizeof( char));
-            while ((read( connfd, buffer, MAXLINE)) > 0) {
-                fprintf( fd, "%s", buffer);
-            }
-            fclose( fd);
-            pthread_mutex_lock( work_list_mutex);
-            insere_lln( work_number, work_list);
-            pthread_mutex_unlock( work_list_mutex);
-        }
-        /*Não vai mais receber trabalho*/
-        else if (!strncmp( recvline, "006\r\n", 5 * sizeof( char))) {
-            receiving_jobs = false;
         }
         close( connfd);
     }
@@ -187,6 +144,9 @@ communist_leader( void *args) {
     char buffer[MAXLINE];
     struct sockaddr_in servaddr_im;
     bool alive = true;
+
+    int work_number;
+    FILE *fd;
 
     leader_args *arg = (leader_args *) args;
 
@@ -257,7 +217,7 @@ communist_leader( void *args) {
             }
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
-        else if (*(arg->receiving_jobs) == false) {
+        else {
             if (nextLeader()) {
                 /* Request new leader election */
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
@@ -274,11 +234,40 @@ communist_leader( void *args) {
                 }
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 read( sockfd_im, buffer, MAXLINE);
-                if (!strncmp( buffer, "000\r\n", 5 * sizeof( char))) {
-                    *(arg->receiving_jobs) = true;
-                }
-                else {
-                    alive = false;
+                while (!strncmp( buffer, "005\r\n", 5 * sizeof( char))) {
+                    write( sockfd_im, "100\r\n", 5 * sizeof( char));
+                    read( sockfd_im, buffer, MAXLINE);
+
+                    work_number = atoi(buffer);
+
+                    makeFileNameIn( work_number, buffer);
+
+                    if ((fd = fopen( buffer, "w")) == NULL) {
+                        /*LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)*/
+                        fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
+                        write( sockfd_im, "111\r\n", 5 * sizeof( char));
+                        limpa_llip( arg->alive_list);
+                        limpa_lln( arg->work_list);
+                        free( arg->alive_list);
+                        free( arg->work_list);
+                        pthread_mutex_destroy( arg->work_list_mutex);
+                        free( arg->work_list_mutex);
+                        pthread_mutex_destroy( arg->alive_list_mutex);
+                        free( arg->alive_list_mutex);
+                        close( sockfd_im);
+                        exit( EXIT_FAILURE);
+                    }
+                    write( sockfd_im, "100\r\n", 5 * sizeof( char));
+                    while ((read( sockfd_im, buffer, MAXLINE)) > 0) {
+                        fprintf( fd, "%s", buffer);
+                    }
+                    fclose( fd);
+                    pthread_mutex_lock( arg->work_list_mutex);
+                    insere_lln( work_number, arg->work_list);
+                    pthread_mutex_unlock( arg->work_list_mutex);
+
+                    write( sockfd_im, "100\r\n", 5 * sizeof( char));
+                    read( sockfd_im, buffer, MAXLINE);
                 }
             }
         }

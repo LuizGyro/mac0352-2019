@@ -27,6 +27,7 @@ The following is a list of all messages available on this system:
 105 - Election request
 106 - Requesting more work
 
+202 - Sending IP (new connection)
 203 - Am alive
 210 - Working
 212 - Work done
@@ -52,4 +53,3 @@ The following is a list of example interactions of this system:
 	> Immortal sends positive (000) or negative (011) response.
 		> If positive response, sends work to immortal
 		> If negative response, waits for some time, and repeats the process
-

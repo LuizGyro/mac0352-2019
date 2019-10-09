@@ -34,6 +34,11 @@ worker() {
     bool work_left = true;
     bool work_done = true;
 
+    /*Somente para primeira comunicacao com imortal*/
+    int sockfd, n;
+    char recvline[MAXLINE + 1];
+    struct sockaddr_in servaddr;
+
     work_args *arg = malloc( sizeof( work_args));
     if (arg == NULL) {
         fprintf( stderr, "ERROR: Could not allocate memory\n");
@@ -57,6 +62,35 @@ worker() {
 
     arg->work_done_mutex = work_done_mutex;
     arg->work_done = &work_done;
+
+    /* Comunica-se com o imortal */
+    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
+
+    bzero( &servaddr, sizeof( servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons( IMMORTAL_PORT);
+
+    if (inet_pton( AF_INET, getImmortalIP(), &servaddr.sin_addr) != 1){
+        fprintf(stderr, "ERROR: Some problem with inet_pton\n");
+        exit( EXIT_FAILURE);
+    }
+
+    while (connect( sockfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) < 0) {
+        printf("Could not connect to immortal. Retrying...\n");
+    }
+
+    write( sockfd, "202\r\n", 5 * sizeof( char));
+    n = read( sockfd, recvline, MAXLINE);
+    recvline[n] = 0;
+    if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
+        write( connfd, ip, sizeof( ip));
+    }
+
+    close( sockfd);
+
 
     /*Só roubei do EP01*/
     int listenfd, connfd;
@@ -86,7 +120,7 @@ worker() {
     /*Fim do roubo*/
     work_left = false;
     while (work_left) {
-        if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
+        if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf( stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
             continue;
         }
@@ -127,7 +161,6 @@ worker() {
         else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
             getIP( ip, sizeof( ip));
             write( connfd, "203\r\n", 5 * sizeof( char));
-            write( connfd, ip, sizeof( ip));
         }
         close( connfd);
     }
@@ -151,7 +184,7 @@ work(void *args) {
     makeFileNameOut( arg->work_number, out);
     orderFile( in, out);
 
-    /*Mandar pro lider o trabalho*/
+    /*Mandar pro imortal o trabalho*/
     int sockfd, n;
     char recvline[MAXLINE + 1];
     char buffer[MAXLINE + 1];
