@@ -7,6 +7,8 @@ immortal( int file_number, char **out_files) {
     celula_n *work_done_list = malloc( sizeof( celula_n));
     celula_n *current_work_list = malloc( sizeof( celula_n));
 
+    pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
+
     celula_ip *alive_list = malloc( sizeof( celula_ip));
 
     bool work_left = true;
@@ -18,6 +20,16 @@ immortal( int file_number, char **out_files) {
     struct sockaddr_in servaddr;
     char recvline[MAXLINE + 1];
     ssize_t n;
+
+    if (pthread_mutex_init( alive_list_mutex, NULL)) {
+        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        free( alive_list);
+        free( work_list);
+        pthread_mutex_destroy( work_list_mutex);
+        free( work_list_mutex);
+        free( alive_list_mutex);
+        exit( EXIT_FAILURE);
+    }
 
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
@@ -51,6 +63,7 @@ immortal( int file_number, char **out_files) {
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
 
+        /* Recebe trabalho de um worker */
         if (!strncmp( recvline, "212\r\n", 5 * sizeof( char))) {
             write( connfd, "000\r\n", 5 * sizeof( char));
             n = read( connfd, recvline, MAXLINE);
@@ -67,6 +80,15 @@ immortal( int file_number, char **out_files) {
             insere_lln( work_number, work_done_list);
             out_files[work_number] = malloc( sizeof( out));
             strcpy(out_files[work_number], out);
+        }
+        //New machine
+        else if (!strncmp( recvline, "202\r\n", 5 * sizeof( char))) {
+            write( connfd, "000\r\n", 5 * sizeof( char));
+            n = read( connfd, recvline, MAXLINE);
+            recvline[n] = 0;
+            pthread_mutex_lock(alive_list_mutex);
+            insere_llip(alive_list, recvline)
+            pthread_mutex_unlock(alive_list_mutex);
         }
         //Election request
         else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {

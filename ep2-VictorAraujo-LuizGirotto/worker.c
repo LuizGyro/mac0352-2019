@@ -86,7 +86,7 @@ worker() {
     n = read( sockfd, recvline, MAXLINE);
     recvline[n] = 0;
     if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
-        write( connfd, ip, sizeof( ip));
+        write( sockfd, ip, sizeof( ip));
     }
 
     close( sockfd);
