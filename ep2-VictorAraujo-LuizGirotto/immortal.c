@@ -42,14 +42,18 @@ immortal( int file_number, char **out_files) {
     for (int i = 0; i < file_number; i++) {
         insere_lln( i, work_left_list);
     }
-    work_left = false;
+
     while (work_left) {
+        printf("Alguém me quer ?\n");
+        pid_t child;
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
             fprintf(stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
             continue;
         }
+        printf("Alguém me quer\n");
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
+        printf("%s\n", recvline);
 
         if (!strncmp( recvline, "212\r\n", 5 * sizeof( char))) {
             write( connfd, "000\r\n", 5 * sizeof( char));
@@ -67,6 +71,14 @@ immortal( int file_number, char **out_files) {
             insere_lln( work_number, work_done_list);
             out_files[work_number] = malloc( sizeof( out));
             strcpy(out_files[work_number], out);
+        }
+        //Election request
+        else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {
+            printf("Imma pick a leader\n");
+        }
+        //Jobs request
+        else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
+            printf("Imma give this man some jurbs\n");
         }
     }
 

@@ -84,6 +84,7 @@ worker() {
         exit( EXIT_FAILURE);
     }
     /*Fim do roubo*/
+    work_left = false;
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
             fprintf( stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));

@@ -274,7 +274,7 @@ communist_leader( void *args) {
                 }
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 read( sockfd_im, buffer, MAXLINE);
-                if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
+                if (!strncmp( buffer, "000\r\n", 5 * sizeof( char))) {
                     *(arg->receiving_jobs) = true;
                 }
                 else {

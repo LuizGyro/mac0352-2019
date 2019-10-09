@@ -56,14 +56,11 @@ getIP ( char *ip, int ipsize) {
 }
 
 char *getImmortalIP() {
-    FILE *conf;
-    char *ip;
-    struct stat *file_mdata = malloc( sizeof( struct stat));
-
-    conf = fopen( "ep02.conf", "r");
-    stat( "ep02.conf", file_mdata);
-    ip = malloc( file_mdata->st_size);
-    fread( ip, 1, file_mdata->st_size, conf);
+    FILE *fd;
+    char *ip = NULL;
+    size_t n = 0;
+    fd = fopen( "ep02.conf", "r");
+    getline( &ip, &n, fd);
+    fclose( fd);
     return ip;
-
 }
