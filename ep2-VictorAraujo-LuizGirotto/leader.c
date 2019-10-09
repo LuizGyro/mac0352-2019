@@ -32,6 +32,8 @@ leader() {
     pthread_mutex_t *work_list_mutex = malloc( sizeof( pthread_mutex_t));
     pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
 
+    pthread_t thread;
+
     bool is_leader = true;
     bool receiving_jobs = true;
 
@@ -39,6 +41,8 @@ leader() {
     struct sockaddr_in servaddr;
     char recvline[MAXLINE + 1];
     ssize_t n;
+
+    leader_args *args = malloc( sizeof( leader_args));
 
     if (pthread_mutex_init( work_list_mutex, NULL)) {
         fprintf( stderr, "ERROR: Could not initialize mutex\n");
@@ -97,6 +101,13 @@ leader() {
         exit( EXIT_FAILURE);
     }
 
+    args->alive_list = alive_list;
+    args->alive_list_mutex = alive_list_mutex;
+    args->work_list = work_list;
+    args->work_list_mutex = work_list_mutex;
+    args->receiving_jobs = &receiving_jobs;
+
+    pthread_create( thread, NULL, communist_leader, args);
     while (is_leader) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL) == -1)) {
             fprintf(stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));

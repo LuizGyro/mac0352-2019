@@ -154,6 +154,8 @@ work(void *args) {
     /*Mandar pro lider o trabalho*/
     int sockfd, n;
     char recvline[MAXLINE + 1];
+    char buffer[MAXLINE + 1];
+
     struct sockaddr_in servaddr;
 
     if ((sockfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
@@ -175,16 +177,16 @@ work(void *args) {
     write( sockfd, "212\r\n", 5 * sizeof( char));
     n = read( sockfd, recvline, MAXLINE);
     recvline[n] = 0;
-    /* Can receive either 000 or 011. Retry if 011 */
-    while (!strncmp( recvline, "011\r\n", 5 * sizeof( char))) {
-        printf("Esperando imortal estar disponivel...\n");
+    if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
+        snprintf( buffer, MAXLINE, "%d", arg->work_number);
+        write( sockfd, buffer, sizeof( buffer));
         n = read( sockfd, recvline, MAXLINE);
         recvline[n] = 0;
+        if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
+            sendFile( out, sockfd);
+            close( sockfd);
+        }
     }
-
-    sendFile( out, sockfd);
-    close( sockfd);
-
     pthread_mutex_lock( arg->work_done_mutex);
     *(arg->work_done) = true;
     pthread_mutex_unlock( arg->work_done_mutex);
