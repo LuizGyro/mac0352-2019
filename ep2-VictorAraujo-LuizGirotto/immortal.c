@@ -23,10 +23,11 @@ immortal( int file_number, char **out_files) {
 
     if (pthread_mutex_init( alive_list_mutex, NULL)) {
         fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        free( work_left_list);
+        free( work_done_list);
+        free( current_work_list);
         free( alive_list);
-        free( work_list);
-        pthread_mutex_destroy( work_list_mutex);
-        free( work_list_mutex);
+        pthread_mutex_destroy( alive_list_mutex);
         free( alive_list_mutex);
         exit( EXIT_FAILURE);
     }
@@ -86,9 +87,9 @@ immortal( int file_number, char **out_files) {
             write( connfd, "000\r\n", 5 * sizeof( char));
             n = read( connfd, recvline, MAXLINE);
             recvline[n] = 0;
-            pthread_mutex_lock(alive_list_mutex);
-            insere_llip(alive_list, recvline)
-            pthread_mutex_unlock(alive_list_mutex);
+            pthread_mutex_lock( alive_list_mutex);
+            insere_llip( recvline, alive_list);
+            pthread_mutex_unlock( alive_list_mutex);
         }
         //Election request
         else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {
@@ -101,6 +102,7 @@ immortal( int file_number, char **out_files) {
     }
 
     close( connfd);
+    pthread_mutex_destroy( alive_list_mutex);
     free( work_left_list);
     free( work_done_list);
     free( current_work_list);

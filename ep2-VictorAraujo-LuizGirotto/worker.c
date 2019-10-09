@@ -34,11 +34,6 @@ worker() {
     bool work_left = true;
     bool work_done = true;
 
-    /*Somente para primeira comunicacao com imortal*/
-    int sockfd, n;
-    char recvline[MAXLINE + 1];
-    struct sockaddr_in servaddr;
-
     work_args *arg = malloc( sizeof( work_args));
     if (arg == NULL) {
         fprintf( stderr, "ERROR: Could not allocate memory\n");
@@ -64,6 +59,9 @@ worker() {
     arg->work_done = &work_done;
 
     /* Comunica-se com o imortal */
+    int sockfd, len;
+    char recvline[MAXLINE + 1];
+    struct sockaddr_in servaddr;
     if ((sockfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
@@ -83,8 +81,8 @@ worker() {
     }
 
     write( sockfd, "202\r\n", 5 * sizeof( char));
-    n = read( sockfd, recvline, MAXLINE);
-    recvline[n] = 0;
+    len = read( sockfd, recvline, MAXLINE);
+    recvline[len] = 0;
     if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
         write( sockfd, ip, sizeof( ip));
     }
@@ -94,8 +92,6 @@ worker() {
 
     /*Só roubei do EP01*/
     int listenfd, connfd;
-    struct sockaddr_in servaddr;
-    char recvline[MAXLINE + 1];
     ssize_t n;
 
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -118,6 +114,7 @@ worker() {
         exit( EXIT_FAILURE);
     }
     /*Fim do roubo*/
+
     work_left = false;
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
