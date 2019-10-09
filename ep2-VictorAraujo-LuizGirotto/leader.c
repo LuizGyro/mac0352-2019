@@ -32,7 +32,7 @@ leader() {
     pthread_mutex_t *work_list_mutex = malloc( sizeof( pthread_mutex_t));
     pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
 
-    pthread_t thread;
+    pthread_t *thread = malloc( sizeof( pthread_t));
 
     bool is_leader = true;
     bool receiving_jobs = true;

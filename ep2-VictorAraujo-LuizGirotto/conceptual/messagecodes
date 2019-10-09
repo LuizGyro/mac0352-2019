@@ -16,15 +16,16 @@ The following is a list of all messages available on this system:
 011, 111, 211 - NOT OK
 
 001 - Sent to newly promoted worker (turned into leader)
-002 - Sent to newly demoted leader (turned into simple worker)
+002 - Sent to newly demoted leader (removes itself)
 003 - Sent to check if process is alive
 004 - Sending alive processes list
 005 - Sending a file to be worked on
-
 006 - Won't send more files
+
 102 - Work request
 103 - Am alive
 105 - Election request
+106 - Requesting more work
 
 203 - Am alive
 210 - Working
