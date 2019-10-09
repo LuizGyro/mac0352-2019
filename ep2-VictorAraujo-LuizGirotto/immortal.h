@@ -31,6 +31,6 @@
 #define MAXLINE 4096
 
 
-void immortal( int file_number, , char **out_files);
+void immortal( int file_number, char **out_files);
 
 #endif
