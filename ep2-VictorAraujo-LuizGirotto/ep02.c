@@ -10,6 +10,7 @@
 
 int
 main( int argc, char **argv) {
+    /* Na hora de testar em mais de um computador, passar a seed como argumento */
     srand(time(NULL));
 
     if (argc > 1) {

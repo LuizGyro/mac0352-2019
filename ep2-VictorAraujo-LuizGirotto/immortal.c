@@ -92,6 +92,7 @@ immortal( int file_number, char **out_files) {
         }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
+        printf("[IM] Recebi: %s", recvline);
 
         // Recebe trabalho de um worker
         if (!strncmp( recvline, "212\r\n", 5 * sizeof( char))) {
@@ -130,6 +131,7 @@ immortal( int file_number, char **out_files) {
         }
         //Jobs request
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
+            printf("[IM] Lider quer trabalho\n");
             for (int i = 0; i < JURBS && work_left_list->prox != NULL; i++) {
                 write( connfd, "005\r\n", 5 * sizeof( char));
                 n = read( connfd, buffer, MAXLINE);
@@ -158,6 +160,7 @@ immortal( int file_number, char **out_files) {
             write( connfd, "006\r\n", 5 * sizeof( char));
             printf("Imma give this man some jurbs\n");
         }
+        printf("[IM] Fechei a conexao. work_left: %d\n", work_left);
         close( connfd);
     }
     //SEPUKKU ALL THE THINGS

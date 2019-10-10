@@ -220,6 +220,11 @@ communist_leader( void *args) {
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
         else {
+            if ((sockfd_im = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                fprintf( stderr, "LD-ERROR: could not create socket, %s\n", strerror( errno));
+                exit( EXIT_FAILURE);
+            }
+
             if (false) {
             //if (nextLeader()) {
                 /* Request new leader election */
@@ -233,9 +238,13 @@ communist_leader( void *args) {
             else {
                 /* Remain as leader, request new workload */
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
-                    fprintf( stderr, "LD-Failed to connect to immortal.\n");
+                    fprintf( stderr, "LD-Failed to connect to immortal. %s\n", strerror(errno));
+                    close( sockfd_im);
+                    pthread_mutex_unlock( arg->work_list_mutex);
+                    sleep(1);
                     continue;
                 }
+                printf("[LD] Vou avisar que eu quero trabalho\n");
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 read( sockfd_im, buffer, MAXLINE);
                 while (!strncmp( buffer, "005\r\n", 5 * sizeof( char))) {
