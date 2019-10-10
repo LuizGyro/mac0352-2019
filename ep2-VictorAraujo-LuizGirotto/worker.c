@@ -36,22 +36,22 @@ worker() {
 
     work_args *arg = malloc( sizeof( work_args));
     if (arg == NULL) {
-        fprintf( stderr, "ERROR: Could not allocate memory\n");
+        fprintf( stderr, "WK-ERROR: Could not allocate memory\n");
         exit( EXIT_FAILURE);
     }
     pthread_mutex_t *work_done_mutex = malloc( sizeof( pthread_mutex_t));
     if (work_done_mutex == NULL) {
-        fprintf( stderr, "ERROR: Could not allocate memory\n");
+        fprintf( stderr, "WK-ERROR: Could not allocate memory\n");
         exit( EXIT_FAILURE);
     }
     pthread_t *thread = malloc ( sizeof( pthread_t));
     if (thread == NULL) {
-        fprintf( stderr, "ERROR: Could not allocate memory\n");
+        fprintf( stderr, "WK-ERROR: Could not allocate memory\n");
         exit( EXIT_FAILURE);
     }
 
     if (pthread_mutex_init( work_done_mutex, NULL)) {
-        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        fprintf( stderr, "WK-ERROR: Could not initialize mutex\n");
         exit( EXIT_FAILURE);
     }
 
@@ -61,24 +61,24 @@ worker() {
     /* Prepara socket pra comunicacao inicial com o imortal */
     int sockfd, len;
     char recvline[MAXLINE + 1];
-    struct sockaddr_in servaddr;
+    struct sockaddr_in servaddr, servaddr_im;
     if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        fprintf( stderr, "WK-ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
 
-    bzero( &servaddr, sizeof( servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons( IMMORTAL_PORT);
+    bzero( &servaddr_im, sizeof( servaddr_im));
+    servaddr_im.sin_family = AF_INET;
+    servaddr_im.sin_port = htons( IMMORTAL_PORT);
 
-    if (inet_pton( AF_INET, getImmortalIP(), &servaddr.sin_addr) != 1){
-        fprintf( stderr, "ERROR: Some problem with inet_pton\n");
+    if (inet_pton( AF_INET, getImmortalIP(), &servaddr_im.sin_addr) != 1){
+        fprintf( stderr, "WK-ERROR: Some problem with inet_pton\n");
         exit( EXIT_FAILURE);
     }
 
     /* Comunica-se com o imortal */
-    while (connect( sockfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) < 0) {
-        fprintf( stderr, "%s\n", strerror( errno));
+    while (connect( sockfd, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
+        fprintf( stderr, "WK-%s\n", strerror( errno));
     }
     write( sockfd, "202\r\n", 5 * sizeof( char));
     len = read( sockfd, recvline, MAXLINE);
@@ -94,22 +94,22 @@ worker() {
     ssize_t n;
 
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        fprintf( stderr, "WK-ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
 
-    bzero( &servaddr, sizeof(servaddr));
+    bzero( &servaddr, sizeof( servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port        = htons(WORKER_PORT);
 
     if (bind( listenfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) == -1) {
-        fprintf( stderr, "ERROR: Could not bind socket, %s\n", strerror( errno));
+        fprintf( stderr, "WK-ERROR: Could not bind socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
 
     if (listen( listenfd, LISTENQ) == -1) {
-        fprintf( stderr, "ERROR: Could not listen on port, %s\n", strerror( errno));
+        fprintf( stderr, "WK-ERROR: Could not listen on port, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
     /*Fim do roubo*/
@@ -117,13 +117,15 @@ worker() {
 
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
-            fprintf( stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
+            fprintf( stderr, "WK-ERROR: Could not accept connection, %s\n", strerror( errno));
             continue;
         }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
         if (!strncmp( recvline, "001\r\n", 5 * sizeof( char))) {
             if ((leader_pid = fork()) == 0) {
+                close( connfd);
+                close( listenfd);
                 leader();
             }
         }
@@ -136,7 +138,7 @@ worker() {
                 makeFileNameIn( arg->work_number, buffer);
 
                 if ((fd = fopen( buffer, "w")) == NULL) {
-                    fprintf(stderr, "ERROR: Could not open file, %s\n", strerror( errno));
+                    fprintf(stderr, "WK-ERROR: Could not open file, %s\n", strerror( errno));
                     write( connfd, "211\r\n", 5 * sizeof( char));
                     exit( EXIT_FAILURE);
                 }
@@ -146,7 +148,7 @@ worker() {
                 }
                 fclose( fd);
                 if (pthread_create( thread, NULL, work, arg)) {
-                    fprintf(stderr, "ERROR: Could not create thread\n");
+                    fprintf(stderr, "WK-ERROR: Could not create thread\n");
                 }
             }
             else {
@@ -187,7 +189,7 @@ work(void *args) {
     struct sockaddr_in servaddr;
 
     if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        fprintf( stderr, "WK-ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
 
@@ -196,7 +198,7 @@ work(void *args) {
     servaddr.sin_port = htons( IMMORTAL_PORT);
 
     if (inet_pton( AF_INET, getImmortalIP(), &servaddr.sin_addr) != 1){
-        fprintf(stderr, "ERROR: Some problem with inet_pton\n");
+        fprintf(stderr, "WK-ERROR: Some problem with inet_pton\n");
         exit( EXIT_FAILURE);
     }
 
@@ -212,9 +214,9 @@ work(void *args) {
         recvline[n] = 0;
         if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
             sendFile( out, sockfd);
-            close( sockfd);
         }
     }
+    close( sockfd);
     pthread_mutex_lock( arg->work_done_mutex);
     *(arg->work_done) = true;
     pthread_mutex_unlock( arg->work_done_mutex);

@@ -32,7 +32,7 @@ immortal( int file_number, char **out_files) {
     ssize_t n;
 
     if (pthread_mutex_init( alive_list_mutex, NULL)) {
-        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        fprintf( stderr, "IM-ERROR: Could not initialize mutex\n");
         free( work_left_list);
         free( work_done_list);
         free( current_work_list);
@@ -43,7 +43,7 @@ immortal( int file_number, char **out_files) {
     }
 
     if (pthread_mutex_init( leader_ip_mutex, NULL)) {
-        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        fprintf( stderr, "IM-ERROR: Could not initialize mutex\n");
         free( work_left_list);
         free( work_done_list);
         free( current_work_list);
@@ -62,7 +62,7 @@ immortal( int file_number, char **out_files) {
     pthread_create( thread, NULL, heartbeat, args);
 
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
 
@@ -71,13 +71,13 @@ immortal( int file_number, char **out_files) {
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port        = htons(IMMORTAL_PORT);
 
-    if ((bind( listenfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) == -1)) {
-        fprintf( stderr, "ERROR: Could not bind socket, %s\n", strerror( errno));
+    if (bind( listenfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) == -1) {
+        fprintf( stderr, "IM-ERROR: Could not bind socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
 
     if (listen( listenfd, LISTENQ) == -1) {
-        fprintf( stderr, "ERROR: Could not listen on port, %s\n", strerror( errno));
+        fprintf( stderr, "IM-ERROR: Could not listen on port, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
 
@@ -87,7 +87,7 @@ immortal( int file_number, char **out_files) {
 
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
-            fprintf(stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
+            fprintf(stderr, "IM-ERROR: Could not accept connection, %s\n", strerror( errno));
             continue;
         }
         n = read( connfd, recvline, MAXLINE);
@@ -160,7 +160,6 @@ immortal( int file_number, char **out_files) {
         }
         close( connfd);
     }
-
     //SEPUKKU ALL THE THINGS
     close( listenfd);
     pthread_mutex_destroy( alive_list_mutex);
@@ -181,10 +180,6 @@ heartbeat( void *args) {
 
     int sockfd_wk;
     struct sockaddr_in servaddr_wk;
-    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
-        exit( EXIT_FAILURE);
-    }
     bzero( &servaddr_wk, sizeof( servaddr_wk));
     servaddr_wk.sin_family = AF_INET;
     servaddr_wk.sin_port = htons( WORKER_PORT);
@@ -192,12 +187,12 @@ heartbeat( void *args) {
     int sockfd_leader;
     struct sockaddr_in servaddr_leader;
     if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
     bzero( &servaddr_leader, sizeof( servaddr_leader));
     servaddr_leader.sin_family = AF_INET;
-    servaddr_leader.sin_port = htons( WORKER_PORT);
+    servaddr_leader.sin_port = htons( LEADER_PORT);
 
 
     while (true) {
@@ -205,33 +200,38 @@ heartbeat( void *args) {
 
         pthread_mutex_lock( arg->alive_list_mutex);
         
+        /* Checa se geral ta vivo */
         for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
+            if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
+                exit( EXIT_FAILURE);
+            }
             if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr) != 1) {
                 perror( "inet_pton");
                 exit( EXIT_FAILURE);
             }
             int retries = 0;
-            // Fazer timeout deste socket ser mais curto do que o normal =
-            if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
+            // Fazer timeout deste socket ser mais curto do que o normal
+            while (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
                 if (retries < 3) {
                     retries++;
                     sleep(1);
                 }
                 else {
-                    fprintf( stderr, "ERROR: Failed to connect to worker, removing from list. %s\n", strerror( errno));
+                    fprintf( stderr, "IM-ERROR: Failed to connect to worker, removing from list. %s\n", strerror( errno));
                     busca_e_remove_llip( p->ip, arg->alive_list);
+                    break;
                 }
             }
-            else {
+            if (retries < 3) {
                 write( sockfd_wk, "003\r\n", 5 * sizeof( char));
-                int n = read( sockfd_leader, buffer, MAXLINE);
+                int n = read( sockfd_wk, buffer, MAXLINE);
                 buffer[n] = 0;
                 if (strncmp( buffer, "203\r\n", 5 * sizeof( char))) {
                     num_alive++;
                 }
-                close( sockfd_wk);
             }
-
+            close( sockfd_wk);
         }
 
         pthread_mutex_unlock( arg->alive_list_mutex);
@@ -240,8 +240,35 @@ heartbeat( void *args) {
             continue;
         } 
 
+        /* Checa se precisa de eleicao */
         pthread_mutex_lock( arg->leader_ip_mutex);
-        if (inet_pton(AF_INET, arg->leader_ip, &servaddr_leader.sin_addr) == 0 || connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader)) < 0) {
+        bool requires_election = false;
+        if (inet_pton(AF_INET, arg->leader_ip, &servaddr_leader.sin_addr) == 0) {
+            requires_election = true;
+        }
+        else {
+            int retries = 0;
+            // Fazer timeout deste socket ser mais curto do que o normal
+            int bob;
+            while ((bob = connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader))) == -1) {
+                printf("%s\n", strerror(errno));
+                if (retries < 5) {
+                    retries++;
+                    sleep(1);
+                }
+                else {
+                    requires_election = true;
+                    break;
+                }
+                close( sockfd_leader);
+                if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                    fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
+                    exit( EXIT_FAILURE);
+                }
+            }
+        }
+        
+        if (requires_election) {
             // Eleicao emergencial
             int new_leader = rand() % num_alive;
             int i = 0;
@@ -255,18 +282,23 @@ heartbeat( void *args) {
 
             // Avisa para todos quem eh o novo lider
             pthread_mutex_lock( arg->alive_list_mutex);
-        
+
             for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
+                if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                    fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
+                    exit( EXIT_FAILURE);
+                }
                 if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr) != 1) {
                     perror( "inet_pton");
                     exit( EXIT_FAILURE);
                 }
                 // Fazer timeout deste socket ser mais curto do que o normal
                 if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
-                    fprintf( stderr, "ERROR: Failed to connect do worker, somehow.\n");
+                    fprintf( stderr, "IM-ERROR: Failed to connect do worker, somehow. %s\n", strerror(errno));
                 }
                 else {
                     if (strncmp(p->ip, arg->leader_ip, INET_ADDRSTRLEN) == 0) {
+                        printf("Imma pick you %s | %s\n", arg->leader_ip, p->ip);
                         write( sockfd_wk, "001\r\n", 5 * sizeof( char));
                     }
                     write( sockfd_wk, "007\r\n", 5 * sizeof( char));
@@ -275,12 +307,15 @@ heartbeat( void *args) {
                     if (strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
                         write( sockfd_wk, arg->leader_ip, sizeof( arg->leader_ip));
                     }
-                    close( sockfd_wk);
                 }
+                close( sockfd_wk);
             }
-
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
+        else {
+            printf("nem precisa eleger\n");
+        }
+        close( sockfd_leader);
 
         connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader));
         write( sockfd_leader, "004\r\n", 5 * sizeof( char));
