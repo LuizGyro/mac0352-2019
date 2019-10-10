@@ -277,10 +277,11 @@ heartbeat( void *args) {
                 }
             }
             if (!requires_election) {
+                /* Sending heartbeat is not required, but we should close socket here */
                 write( sockfd_leader, "003\r\n", 5 * sizeof( char));
                 int n = read( sockfd_leader, buffer, MAXLINE);
                 buffer[n] = 0;
-                printf("003 lider me falou: %s", buffer);
+                printf("[IM] lider me falou: %s", buffer);
                 close( sockfd_leader);
                 if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
                     fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
@@ -336,7 +337,7 @@ heartbeat( void *args) {
         else {
             printf("[IM] No election required\n");
         }
-    
+
         if (connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader)) == -1) {
             fprintf( stderr, "ERRO: Could not connect IM to LD: %s\n", strerror( errno));
         }
@@ -344,7 +345,8 @@ heartbeat( void *args) {
             write( sockfd_leader, "004\r\n", 5 * sizeof( char));
             int n = read( sockfd_leader, buffer, MAXLINE);
             buffer[n] = 0;
-            if (strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+            if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                printf("[IM] Sending alive list\n");
                 for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
                     write( sockfd_leader, p->ip, INET_ADDRSTRLEN * sizeof( char));
                 }

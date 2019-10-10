@@ -111,20 +111,23 @@ leader() {
         }
         n = read( connfd_ld, recvline, MAXLINE);
         recvline[n] = 0;
-        printf("LD eu ouvi: %s", recvline);
+        printf("[LD] recebeu: %s", recvline);
 
         if (!strncmp( recvline, "002\r\n", 5 * sizeof( char))) {
             is_leader = false;
         }
+        /* Not permanent!! Leader does not respond to heartbeat */
         else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
             write( connfd_ld, "103\r\n", 5 * sizeof( char));
         }
         else if (!strncmp( recvline, "004\r\n", 5 * sizeof( char))) {
-            //limpa_llip( alive_list);
+            printf("[LD] CLEANING ALIVE LIST\n");
+            limpa_llip( alive_list);
             write( connfd_ld, "100\r\n", 5 * sizeof( char));
             while ((read( connfd_ld, buffer, MAXLINE)) > 0) {
                 pthread_mutex_lock( alive_list_mutex);
                 insere_llip( buffer, alive_list);
+                printf("[LD] Added to alive_list: %s\n", buffer);
                 pthread_mutex_unlock( alive_list_mutex);
             }
         }
