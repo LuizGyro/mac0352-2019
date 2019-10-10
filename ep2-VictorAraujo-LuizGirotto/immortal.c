@@ -10,6 +10,8 @@ immortal( int file_number, char **out_files) {
     celula_n *current_work_list = malloc( sizeof( celula_n));
 
     pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
+    pthread_mutex_t *leader_ip_mutex = malloc( sizeof( pthread_mutex_t));
+
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
 
@@ -19,6 +21,10 @@ immortal( int file_number, char **out_files) {
 
     char out[MAXLINE + 1];
     char buffer[MAXLINE + 1];
+    char leader_ip[INET_ADDRSTRLEN];
+
+    pthread_t *thread = malloc( sizeof( pthread_t));
+    im_thread_args *args = malloc( sizeof( im_thread_args));
 
     int listenfd, connfd;
     struct sockaddr_in servaddr;
@@ -35,6 +41,25 @@ immortal( int file_number, char **out_files) {
         free( alive_list_mutex);
         exit( EXIT_FAILURE);
     }
+
+    if (pthread_mutex_init( leader_ip_mutex, NULL)) {
+        fprintf( stderr, "ERROR: Could not initialize mutex\n");
+        free( work_left_list);
+        free( work_done_list);
+        free( current_work_list);
+        free( alive_list);
+        pthread_mutex_destroy( alive_list_mutex);
+        free( alive_list_mutex);
+        exit( EXIT_FAILURE);
+    }
+
+
+    args->alive_list = alive_list;
+    args->alive_list_mutex = alive_list_mutex;
+    args->leader_ip_mutex = leader_ip_mutex;
+    args->leader_ip = leader_ip;
+
+    pthread_create( thread, NULL, heartbeat, args);
 
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
@@ -71,9 +96,9 @@ immortal( int file_number, char **out_files) {
         // Recebe trabalho de um worker
         if (!strncmp( recvline, "212\r\n", 5 * sizeof( char))) {
             write( connfd, "000\r\n", 5 * sizeof( char));
-            n = read( connfd, recvline, MAXLINE);
-            recvline[n] = 0;
-            int work_number = atoi( recvline);
+            n = read( connfd, buffer, MAXLINE);
+            buffer[n] = 0;
+            int work_number = atoi( buffer);
             makeFileNameOut( work_number, out);
             FILE *fd = fopen( out, "w");
             write( connfd, "000\r\n", 5 * sizeof( char));
@@ -176,7 +201,9 @@ heartbeat( void *args) {
 
 
     while (true) {
+        printf("Sleeping");
         sleep(TIME_SLEEP);
+        printf("Done sleeping");
         
         pthread_mutex_lock( arg->alive_list_mutex);
         
