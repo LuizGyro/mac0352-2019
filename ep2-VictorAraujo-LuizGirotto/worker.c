@@ -58,11 +58,11 @@ worker() {
     arg->work_done_mutex = work_done_mutex;
     arg->work_done = &work_done;
 
-    /* Comunica-se com o imortal */
+    /* Prepara socket pra comunicacao inicial com o imortal */
     int sockfd, len;
     char recvline[MAXLINE + 1];
     struct sockaddr_in servaddr;
-    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -72,14 +72,14 @@ worker() {
     servaddr.sin_port = htons( IMMORTAL_PORT);
 
     if (inet_pton( AF_INET, getImmortalIP(), &servaddr.sin_addr) != 1){
-        fprintf(stderr, "ERROR: Some problem with inet_pton\n");
+        fprintf( stderr, "ERROR: Some problem with inet_pton\n");
         exit( EXIT_FAILURE);
     }
 
+    /* Comunica-se com o imortal */
     while (connect( sockfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) < 0) {
-        printf("Could not connect to immortal. Retrying...\n");
+        fprintf( stderr, "%s\n", strerror( errno));
     }
-
     write( sockfd, "202\r\n", 5 * sizeof( char));
     len = read( sockfd, recvline, MAXLINE);
     recvline[len] = 0;
@@ -87,9 +87,7 @@ worker() {
         getIP( ip, sizeof( ip));
         write( sockfd, ip, sizeof( ip));
     }
-
     close( sockfd);
-
 
     /*Só roubei do EP01*/
     int listenfd, connfd;
@@ -116,7 +114,7 @@ worker() {
     }
     /*Fim do roubo*/
 
-    work_left = false;
+
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf( stderr, "ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -188,7 +186,7 @@ work(void *args) {
 
     struct sockaddr_in servaddr;
 
-    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }

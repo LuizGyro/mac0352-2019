@@ -30,8 +30,8 @@ getIP ( char *ip, int ipsize) {
 
     s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0) {
-      perror("socket");
-      return 0;
+        perror("socket");
+        return 0;
     }
 
     ifconf.ifc_buf = (char *) ifr;
@@ -42,14 +42,15 @@ getIP ( char *ip, int ipsize) {
       return 0;
     }
 
-    while (strncmp(ifr[i].ifr_name, "wlp1s0", 6)){
+    /* Might be a stretch */
+    while (strncmp(ifr[i].ifr_name, "wl", 2)){
         i++;
     }
     struct sockaddr_in *s_in = (struct sockaddr_in *) &ifr[i].ifr_addr;
 
     if (!inet_ntop(AF_INET, &s_in->sin_addr, ip, ipsize)) {
-      perror("inet_ntop");
-      return 0;
+        perror("inet_ntop");
+        return 0;
     }
 
     return 1;

@@ -181,7 +181,7 @@ heartbeat( void *args) {
 
     int sockfd_wk;
     struct sockaddr_in servaddr_wk;
-    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -191,7 +191,7 @@ heartbeat( void *args) {
 
     int sockfd_leader;
     struct sockaddr_in servaddr_leader;
-    if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -201,10 +201,8 @@ heartbeat( void *args) {
 
 
     while (true) {
-        printf("Sleeping");
         sleep(TIME_SLEEP);
-        printf("Done sleeping");
-        
+
         pthread_mutex_lock( arg->alive_list_mutex);
         
         for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
@@ -212,10 +210,17 @@ heartbeat( void *args) {
                 perror( "inet_pton");
                 exit( EXIT_FAILURE);
             }
-            /* Fazer timeout deste socket ser mais curto do que o normal */
+            int retries = 0;
+            // Fazer timeout deste socket ser mais curto do que o normal =
             if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
-                fprintf( stderr, "ERROR: Failed to connect do worker, removing from list.\n");
-                busca_e_remove_llip( p->ip, arg->alive_list);
+                if (retries < 3) {
+                    retries++;
+                    sleep(1);
+                }
+                else {
+                    fprintf( stderr, "ERROR: Failed to connect to worker, removing from list. %s\n", strerror( errno));
+                    busca_e_remove_llip( p->ip, arg->alive_list);
+                }
             }
             else {
                 write( sockfd_wk, "003\r\n", 5 * sizeof( char));
@@ -230,6 +235,10 @@ heartbeat( void *args) {
         }
 
         pthread_mutex_unlock( arg->alive_list_mutex);
+
+        if (num_alive == 0) {
+            continue;
+        } 
 
         pthread_mutex_lock( arg->leader_ip_mutex);
         if (inet_pton(AF_INET, arg->leader_ip, &servaddr_leader.sin_addr) == 0 || connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader)) < 0) {
@@ -252,7 +261,7 @@ heartbeat( void *args) {
                     perror( "inet_pton");
                     exit( EXIT_FAILURE);
                 }
-                /* Fazer timeout deste socket ser mais curto do que o normal */
+                // Fazer timeout deste socket ser mais curto do que o normal
                 if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
                     fprintf( stderr, "ERROR: Failed to connect do worker, somehow.\n");
                 }

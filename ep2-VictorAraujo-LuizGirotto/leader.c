@@ -59,7 +59,7 @@ leader() {
         exit( EXIT_FAILURE);
     }
 
-    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         free( alive_list);
         free( work_list);
@@ -150,7 +150,7 @@ communist_leader( void *args) {
 
     leader_args *arg = (leader_args *) args;
 
-    if ((sockfd_im = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((sockfd_im = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -167,7 +167,7 @@ communist_leader( void *args) {
     int sockfd_wk;
     struct sockaddr_in servaddr_wk;
 
-    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
         exit( EXIT_FAILURE);
     }
@@ -218,7 +218,8 @@ communist_leader( void *args) {
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
         else {
-            if (nextLeader()) {
+            if (false) {
+            //if (nextLeader()) {
                 /* Request new leader election */
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
                     fprintf( stderr, "Failed to connect do worker.\n");
