@@ -9,6 +9,10 @@ immortal( int file_number, char **out_files) {
     celula_n *work_done_list = malloc( sizeof( celula_n));
     celula_n *current_work_list = malloc( sizeof( celula_n));
 
+    work_left_list->prox = NULL;
+    work_done_list->prox = NULL;
+    current_work_list->prox = NULL;
+
     pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
     pthread_mutex_t *leader_ip_mutex = malloc( sizeof( pthread_mutex_t));
 
@@ -87,6 +91,12 @@ immortal( int file_number, char **out_files) {
         insere_lln( i, work_left_list);
     }
 
+    printf("Imprimindo a lista!!!\n");
+    for (celula_n *p = work_left_list->prox; p != NULL; p = p->prox) {
+        printf("%d\n", p->workn);
+    }
+    printf("Foi as listas\n");
+
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf(stderr, "IM-ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -135,17 +145,23 @@ immortal( int file_number, char **out_files) {
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
             printf("[IM] Lider quer trabalho\n");
             for (int i = 0; i < JURBS && work_left_list->prox != NULL; i++) {
+                printf("Vou forzar, %d\n", i);
                 write( connfd, "005\r\n", 5 * sizeof( char));
                 n = read( connfd, buffer, MAXLINE);
                 buffer[n] = 0;
+                printf("[IM] Mandei 005, recebi %s", buffer);
                 if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                     snprintf( buffer, MAXLINE, "%d", work_left_list->prox->workn);
                     write( connfd, buffer, sizeof( buffer));
+                    n = read( connfd, buffer, MAXLINE);
+                    buffer[n] = 0;
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                        printf("[IM] AGORA VAI HEIN\n");
                         makeFileNameIn( work_left_list->prox->workn, buffer);
                         sendFile( buffer, connfd);
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
+                        printf("[IM] mandei arquivo, recebi %s", buffer);
                         if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                             insere_lln( work_left_list->prox->workn, current_work_list);
                             busca_e_remove_lln( work_left_list->prox->workn, work_left_list);
@@ -153,6 +169,7 @@ immortal( int file_number, char **out_files) {
                     }
                 }
             }
+            printf("Forzei\n");
             //WILL GO BOOM
             if (work_left_list->prox == NULL) {
                 celula_n *p = work_left_list;

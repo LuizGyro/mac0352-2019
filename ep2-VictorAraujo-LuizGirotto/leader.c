@@ -27,6 +27,9 @@ leader() {
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
     celula_n *work_list = malloc( sizeof( celula_n));
+    work_list->prox = NULL;
+    alive_list->prox = NULL;
+
     pthread_mutex_t *work_list_mutex = malloc( sizeof( pthread_mutex_t));
     pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
 
@@ -103,7 +106,7 @@ leader() {
     args->work_list = work_list;
     args->work_list_mutex = work_list_mutex;
 
-    //pthread_create( thread, NULL, communist_leader, args);
+    pthread_create( thread, NULL, communist_leader, args);
     while (is_leader) {
         if ((connfd_ld = accept( listenfd_ld, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf(stderr, "LD-ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -184,8 +187,7 @@ communist_leader( void *args) {
     servaddr_wk.sin_family = AF_INET;
     servaddr_wk.sin_port = htons( WORKER_PORT);
 
-    //LEMBRA DE TIRAR ESSA PORCARIA
-    alive = false;
+
     while (alive) {
         pthread_mutex_lock( arg->work_list_mutex);
         if (arg->work_list->prox != NULL) {
@@ -253,12 +255,20 @@ communist_leader( void *args) {
                     sleep(1);
                     continue;
                 }
+                ssize_t n;
                 printf("[LD] Vou avisar que eu quero trabalho\n");
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
-                read( sockfd_im, buffer, MAXLINE);
+                if((n = read( sockfd_im, buffer, MAXLINE)) < 0) {
+                    printf("Estava esperando algo...");
+                };
+                buffer[n] = 0;
+                printf("[LD] Recebi msg com %ld\n", n);
+                printf("[LD] Mandei 106, recebi %s", buffer);
                 while (!strncmp( buffer, "005\r\n", 5 * sizeof( char))) {
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
-                    read( sockfd_im, buffer, MAXLINE);
+                    n = read( sockfd_im, buffer, MAXLINE);
+                    buffer[n] = 0;
+                    printf("[LD] mandei 100 recebi %s\n", buffer);
 
                     work_number = atoi(buffer);
 
@@ -289,6 +299,7 @@ communist_leader( void *args) {
 
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     read( sockfd_im, buffer, MAXLINE);
+                    printf("[LD] mandei 100 recebi %s", buffer);
                 }
                 close( sockfd_im);
             }
