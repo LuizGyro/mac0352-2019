@@ -10,6 +10,8 @@
 
 int
 main( int argc, char **argv) {
+    srand(time(NULL));
+
     if (argc > 1) {
         pid_t worker_pid;
         if ((worker_pid = fork()) == 0) {

@@ -21,6 +21,8 @@
 
 #include <sys/stat.h>
 
+#include <time.h>
+
 int
 getIP ( char *ip, int ipsize) {
     int s;

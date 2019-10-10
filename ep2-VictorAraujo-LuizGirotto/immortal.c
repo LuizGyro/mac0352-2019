@@ -173,10 +173,10 @@ immortal( int file_number, char **out_files) {
 void *
 heartbeat( void *args) {
     im_thread_args *arg = (im_thread_args *) args;
-    
+
     char buffer[MAXLINE];
 
-    int num_alive = 0;
+    int num_alive;
 
     int sockfd_wk;
     struct sockaddr_in servaddr_wk;
@@ -199,8 +199,9 @@ heartbeat( void *args) {
         sleep(TIME_SLEEP);
 
         pthread_mutex_lock( arg->alive_list_mutex);
-        
+
         /* Checa se geral ta vivo */
+        num_alive = 0;
         for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
             if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
                 fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
@@ -227,7 +228,7 @@ heartbeat( void *args) {
                 write( sockfd_wk, "003\r\n", 5 * sizeof( char));
                 int n = read( sockfd_wk, buffer, MAXLINE);
                 buffer[n] = 0;
-                if (strncmp( buffer, "203\r\n", 5 * sizeof( char))) {
+                if (!strncmp( buffer, "203\r\n", 5 * sizeof( char))) {
                     num_alive++;
                 }
             }
@@ -238,7 +239,7 @@ heartbeat( void *args) {
 
         if (num_alive == 0) {
             continue;
-        } 
+        }
 
         /* Checa se precisa de eleicao */
         pthread_mutex_lock( arg->leader_ip_mutex);
@@ -247,11 +248,14 @@ heartbeat( void *args) {
             requires_election = true;
         }
         else {
+            if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
+                exit( EXIT_FAILURE);
+            }
             int retries = 0;
             // Fazer timeout deste socket ser mais curto do que o normal
-            int bob;
-            while ((bob = connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader))) == -1) {
-                printf("%s\n", strerror(errno));
+            while ((connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader))) == -1) {
+                printf("IM-ERROR: Failed to connect to existing leader: %s\n", strerror(errno));
                 if (retries < 5) {
                     retries++;
                     sleep(1);
@@ -267,7 +271,7 @@ heartbeat( void *args) {
                 }
             }
         }
-        
+
         if (requires_election) {
             // Eleicao emergencial
             int new_leader = rand() % num_alive;
@@ -313,7 +317,7 @@ heartbeat( void *args) {
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
         else {
-            printf("nem precisa eleger\n");
+            printf("[IM] No election required\n");
         }
         close( sockfd_leader);
 

@@ -194,7 +194,8 @@ communist_leader( void *args) {
                 }
                 /* Fazer timeout deste socket ser mais curto do que o normal */
                 if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
-                    fprintf( stderr, "LD-Failed to connect do worker.\n");
+                    fprintf( stderr, "LD-Failed to connect to worker.\n");
+                    printf("IP de tentativa falha de conexao: %s\n", p->ip);
                 }
 
                 else {
@@ -223,7 +224,7 @@ communist_leader( void *args) {
             //if (nextLeader()) {
                 /* Request new leader election */
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
-                    fprintf( stderr, "LD-Failed to connect do worker.\n");
+                    fprintf( stderr, "LD-Failed to connect to immortal.\n");
                 }
                 write( sockfd_im, "105\r\n", 5 * sizeof( char));
                 alive = false;
@@ -232,7 +233,8 @@ communist_leader( void *args) {
             else {
                 /* Remain as leader, request new workload */
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
-                    fprintf( stderr, "LD-Failed to connect do worker.\n");
+                    fprintf( stderr, "LD-Failed to connect to immortal.\n");
+                    continue;
                 }
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 read( sockfd_im, buffer, MAXLINE);
@@ -265,6 +267,7 @@ communist_leader( void *args) {
                     }
                     fclose( fd);
                     pthread_mutex_lock( arg->work_list_mutex);
+                    printf("[LD] Recebi o trabalho %d!\n", work_number);
                     insere_lln( work_number, arg->work_list);
                     pthread_mutex_unlock( arg->work_list_mutex);
 
