@@ -122,6 +122,7 @@ worker() {
         }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
+        printf("WK recebeu: %s", recvline);
         if (!strncmp( recvline, "001\r\n", 5 * sizeof( char))) {
             if ((leader_pid = fork()) == 0) {
                 close( connfd);
@@ -158,6 +159,11 @@ worker() {
         }
         else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
             write( connfd, "203\r\n", 5 * sizeof( char));
+        }
+        else if (!strncmp( recvline, "007\r\n", 5 * sizeof( char))) {
+            write( connfd, "200\r\n", 5 * sizeof( char));
+            read( connfd, buffer, MAXLINE);
+            printf("Meu novo lider é: %s", buffer);
         }
         close( connfd);
     }

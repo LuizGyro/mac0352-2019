@@ -103,7 +103,7 @@ leader() {
     args->work_list = work_list;
     args->work_list_mutex = work_list_mutex;
 
-    pthread_create( thread, NULL, communist_leader, args);
+    //pthread_create( thread, NULL, communist_leader, args);
     while (is_leader) {
         if ((connfd_ld = accept( listenfd_ld, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf(stderr, "LD-ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -111,12 +111,16 @@ leader() {
         }
         n = read( connfd_ld, recvline, MAXLINE);
         recvline[n] = 0;
+        printf("LD eu ouvi: %s", recvline);
 
         if (!strncmp( recvline, "002\r\n", 5 * sizeof( char))) {
             is_leader = false;
         }
+        else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
+            write( connfd_ld, "103\r\n", 5 * sizeof( char));
+        }
         else if (!strncmp( recvline, "004\r\n", 5 * sizeof( char))) {
-            limpa_llip( alive_list);
+            //limpa_llip( alive_list);
             write( connfd_ld, "100\r\n", 5 * sizeof( char));
             while ((read( connfd_ld, buffer, MAXLINE)) > 0) {
                 pthread_mutex_lock( alive_list_mutex);
@@ -177,7 +181,8 @@ communist_leader( void *args) {
     servaddr_wk.sin_family = AF_INET;
     servaddr_wk.sin_port = htons( WORKER_PORT);
 
-
+    //LEMBRA DE TIRAR ESSA PORCARIA
+    alive = false;
     while (alive) {
         pthread_mutex_lock( arg->work_list_mutex);
         if (arg->work_list->prox != NULL) {
@@ -219,6 +224,7 @@ communist_leader( void *args) {
             }
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
+
         else {
             if ((sockfd_im = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
                 fprintf( stderr, "LD-ERROR: could not create socket, %s\n", strerror( errno));
@@ -227,7 +233,7 @@ communist_leader( void *args) {
 
             if (false) {
             //if (nextLeader()) {
-                /* Request new leader election */
+                // Request new leader election
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
                     fprintf( stderr, "LD-Failed to connect to immortal.\n");
                 }
@@ -236,7 +242,7 @@ communist_leader( void *args) {
                 close( sockfd_im);
             }
             else {
-                /* Remain as leader, request new workload */
+                // Remain as leader, request new workload
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
                     fprintf( stderr, "LD-Failed to connect to immortal. %s\n", strerror(errno));
                     close( sockfd_im);
@@ -256,7 +262,7 @@ communist_leader( void *args) {
                     makeFileNameIn( work_number, buffer);
 
                     if ((fd = fopen( buffer, "w")) == NULL) {
-                        /*LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)*/
+                        //LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)
                         fprintf(stderr, "LD-ERROR: Could not open file, %s\n", strerror( errno));
                         write( sockfd_im, "111\r\n", 5 * sizeof( char));
                         limpa_llip( arg->alive_list);
@@ -275,10 +281,8 @@ communist_leader( void *args) {
                         fprintf( fd, "%s", buffer);
                     }
                     fclose( fd);
-                    pthread_mutex_lock( arg->work_list_mutex);
                     printf("[LD] Recebi o trabalho %d!\n", work_number);
                     insere_lln( work_number, arg->work_list);
-                    pthread_mutex_unlock( arg->work_list_mutex);
 
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     read( sockfd_im, buffer, MAXLINE);
