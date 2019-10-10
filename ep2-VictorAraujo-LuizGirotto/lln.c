@@ -24,6 +24,9 @@ void busca_e_remove_lln( int n, celula_n *le) {
 
 void limpa_lln( celula_n *le) {
     celula_n *p, *q;
+    if (le->prox == NULL) {
+        return;
+    }
     p = le->prox;
     q = p->prox;
     while (q != NULL) {
@@ -32,4 +35,5 @@ void limpa_lln( celula_n *le) {
         q = q->prox;
     }
     free(p);
+    le->prox = NULL;
 }

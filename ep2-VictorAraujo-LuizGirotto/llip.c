@@ -24,6 +24,9 @@ void busca_e_remove_llip( char *ip, celula_ip *le) {
 
 void limpa_llip( celula_ip *le) {
     celula_ip *p, *q;
+    if (le->prox == NULL) {
+        return;
+    }
     p = le->prox;
     q = p->prox;
     while (q != NULL) {
@@ -32,4 +35,5 @@ void limpa_llip( celula_ip *le) {
         q = q->prox;
     }
     free(p);
+    le->prox = NULL;
 }
