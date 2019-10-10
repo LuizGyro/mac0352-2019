@@ -39,6 +39,7 @@ immortal( int file_number, char **out_files) {
         free( alive_list);
         pthread_mutex_destroy( alive_list_mutex);
         free( alive_list_mutex);
+        printf("Imma die, mutex\n");
         exit( EXIT_FAILURE);
     }
 
@@ -50,6 +51,7 @@ immortal( int file_number, char **out_files) {
         free( alive_list);
         pthread_mutex_destroy( alive_list_mutex);
         free( alive_list_mutex);
+        printf("Imma die, mutex\n");
         exit( EXIT_FAILURE);
     }
 
@@ -164,6 +166,7 @@ immortal( int file_number, char **out_files) {
         close( connfd);
     }
     //SEPUKKU ALL THE THINGS
+    printf("Imma die ?\n");
     close( listenfd);
     pthread_mutex_destroy( alive_list_mutex);
     free( work_left_list);
@@ -247,7 +250,7 @@ heartbeat( void *args) {
         /* Checa se precisa de eleicao */
         pthread_mutex_lock( arg->leader_ip_mutex);
         bool requires_election = false;
-        if (inet_pton(AF_INET, arg->leader_ip, &servaddr_leader.sin_addr) == 0) {
+        if (inet_pton(AF_INET, arg->leader_ip, &servaddr_leader.sin_addr) != 1) {
             requires_election = true;
         }
         else {
@@ -273,6 +276,17 @@ heartbeat( void *args) {
                     exit( EXIT_FAILURE);
                 }
             }
+            if (!requires_election) {
+                write( sockfd_leader, "003\r\n", 5 * sizeof( char));
+                int n = read( sockfd_leader, buffer, MAXLINE);
+                buffer[n] = 0;
+                printf("003 lider me falou: %s", buffer);
+                close( sockfd_leader);
+                if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                    fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
+                    exit( EXIT_FAILURE);
+                }
+            }
         }
 
         if (requires_election) {
@@ -286,7 +300,7 @@ heartbeat( void *args) {
                 i++;
             }
             strncpy( arg->leader_ip, p->ip, INET_ADDRSTRLEN);
-
+            printf("NOVO LIDE SUPREMO: %s\n", arg->leader_ip);
             // Avisa para todos quem eh o novo lider
             pthread_mutex_lock( arg->alive_list_mutex);
 
@@ -309,10 +323,10 @@ heartbeat( void *args) {
                         write( sockfd_wk, "001\r\n", 5 * sizeof( char));
                     }
                     write( sockfd_wk, "007\r\n", 5 * sizeof( char));
-                    int n = read( sockfd_leader, buffer, MAXLINE);
+                    int n = read( sockfd_wk, buffer, MAXLINE);
                     buffer[n] = 0;
-                    if (strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
-                        write( sockfd_wk, arg->leader_ip, sizeof( arg->leader_ip));
+                    if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
+                        write( sockfd_wk, arg->leader_ip, INET_ADDRSTRLEN * sizeof( char));
                     }
                 }
                 close( sockfd_wk);
@@ -322,15 +336,18 @@ heartbeat( void *args) {
         else {
             printf("[IM] No election required\n");
         }
-        close( sockfd_leader);
-
-        connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader));
-        write( sockfd_leader, "004\r\n", 5 * sizeof( char));
-        int n = read( sockfd_leader, buffer, MAXLINE);
-        buffer[n] = 0;
-        if (strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
-            for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
-                write( sockfd_leader, p->ip, INET_ADDRSTRLEN * sizeof( char));
+    
+        if (connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader)) == -1) {
+            fprintf( stderr, "ERRO: Could not connect IM to LD: %s\n", strerror( errno));
+        }
+        else {
+            write( sockfd_leader, "004\r\n", 5 * sizeof( char));
+            int n = read( sockfd_leader, buffer, MAXLINE);
+            buffer[n] = 0;
+            if (strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
+                    write( sockfd_leader, p->ip, INET_ADDRSTRLEN * sizeof( char));
+                }
             }
         }
         close( sockfd_leader);
