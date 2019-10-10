@@ -84,6 +84,7 @@ worker() {
     len = read( sockfd, recvline, MAXLINE);
     recvline[len] = 0;
     if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
+        getIP( ip, sizeof( ip));
         write( sockfd, ip, sizeof( ip));
     }
 
@@ -156,7 +157,6 @@ worker() {
             pthread_mutex_unlock( work_done_mutex);
         }
         else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
-            getIP( ip, sizeof( ip));
             write( connfd, "203\r\n", 5 * sizeof( char));
         }
         close( connfd);

@@ -29,8 +29,19 @@
 #define LISTENQ 1
 #define MAXDATASIZE 100
 #define MAXLINE 4096
+#define TIME_SLEEP 10
+
+typedef struct _im_thread_args {
+    char leader_ip[INET_ADDRSTRLEN];
+    celula_ip *alive_list;
+    pthread_mutex_t *alive_list_mutex;
+    pthread_mutex_t *leader_ip_mutex;
+} im_thread_args;
+
 
 
 void immortal( int file_number, char **out_files);
+void * heartbeat( void *args);
+
 
 #endif

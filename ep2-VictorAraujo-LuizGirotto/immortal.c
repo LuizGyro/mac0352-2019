@@ -14,7 +14,6 @@ immortal( int file_number, char **out_files) {
     celula_ip *alive_list = malloc( sizeof( celula_ip));
 
     bool work_left = true;
-    bool no_leader = true;
 
     int work_done = 0;
 
@@ -69,7 +68,7 @@ immortal( int file_number, char **out_files) {
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
 
-        /* Recebe trabalho de um worker */
+        // Recebe trabalho de um worker
         if (!strncmp( recvline, "212\r\n", 5 * sizeof( char))) {
             write( connfd, "000\r\n", 5 * sizeof( char));
             n = read( connfd, recvline, MAXLINE);
@@ -123,12 +122,9 @@ immortal( int file_number, char **out_files) {
                             busca_e_remove_lln( work_left_list->prox->workn, work_left_list);
                         }
                     }
-                    else if (!strncmp( buffer, "111\r\n", 5 * sizeof( char))) {
-                        no_leader = true;
-                    }
                 }
             }
-            /*WILL GO BOOM*/
+            //WILL GO BOOM
             if (work_left_list->prox == NULL) {
                 celula_n *p = work_left_list;
                 work_left_list = current_work_list;
@@ -140,7 +136,7 @@ immortal( int file_number, char **out_files) {
         close( connfd);
     }
 
-    /*SEPUKKU ALL THE THINGS*/
+    //SEPUKKU ALL THE THINGS
     close( listenfd);
     pthread_mutex_destroy( alive_list_mutex);
     free( work_left_list);
@@ -148,4 +144,119 @@ immortal( int file_number, char **out_files) {
     free( current_work_list);
     free( alive_list);
     return;
+}
+
+void *
+heartbeat( void *args) {
+    im_thread_args *arg = (im_thread_args *) args;
+    
+    char buffer[MAXLINE];
+
+    int num_alive = 0;
+
+    int sockfd_wk;
+    struct sockaddr_in servaddr_wk;
+    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
+    bzero( &servaddr_wk, sizeof( servaddr_wk));
+    servaddr_wk.sin_family = AF_INET;
+    servaddr_wk.sin_port = htons( WORKER_PORT);
+
+    int sockfd_leader;
+    struct sockaddr_in servaddr_leader;
+    if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0) == -1)) {
+        fprintf( stderr, "ERROR: could not create socket, %s\n", strerror( errno));
+        exit( EXIT_FAILURE);
+    }
+    bzero( &servaddr_leader, sizeof( servaddr_leader));
+    servaddr_leader.sin_family = AF_INET;
+    servaddr_leader.sin_port = htons( WORKER_PORT);
+
+
+    while (true) {
+        sleep(TIME_SLEEP);
+        
+        pthread_mutex_lock( arg->alive_list_mutex);
+        
+        for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
+            if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr) != 1) {
+                perror( "inet_pton");
+                exit( EXIT_FAILURE);
+            }
+            /* Fazer timeout deste socket ser mais curto do que o normal */
+            if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
+                fprintf( stderr, "ERROR: Failed to connect do worker, removing from list.\n");
+                busca_e_remove_llip( p->ip, arg->alive_list);
+            }
+            else {
+                write( sockfd_wk, "003\r\n", 5 * sizeof( char));
+                int n = read( sockfd_leader, buffer, MAXLINE);
+                buffer[n] = 0;
+                if (strncmp( buffer, "203\r\n", 5 * sizeof( char))) {
+                    num_alive++;
+                }
+                close( sockfd_wk);
+            }
+
+        }
+
+        pthread_mutex_unlock( arg->alive_list_mutex);
+
+        pthread_mutex_lock( arg->leader_ip_mutex);
+        if (inet_pton(AF_INET, arg->leader_ip, &servaddr_leader.sin_addr) == 0 || connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader)) < 0) {
+            // Eleicao emergencial
+            int new_leader = rand() % num_alive;
+            int i = 0;
+            celula_ip *p;
+            for (p = arg->alive_list->prox; p != NULL; p = p->prox) {
+                if (i == new_leader)
+                    break;
+                i++;
+            }
+            strncpy( arg->leader_ip, p->ip, INET_ADDRSTRLEN);
+
+            // Avisa para todos quem eh o novo lider
+            pthread_mutex_lock( arg->alive_list_mutex);
+        
+            for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
+                if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr) != 1) {
+                    perror( "inet_pton");
+                    exit( EXIT_FAILURE);
+                }
+                /* Fazer timeout deste socket ser mais curto do que o normal */
+                if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
+                    fprintf( stderr, "ERROR: Failed to connect do worker, somehow.\n");
+                }
+                else {
+                    if (strncmp(p->ip, arg->leader_ip, INET_ADDRSTRLEN) == 0) {
+                        write( sockfd_wk, "001\r\n", 5 * sizeof( char));
+                    }
+                    write( sockfd_wk, "007\r\n", 5 * sizeof( char));
+                    int n = read( sockfd_leader, buffer, MAXLINE);
+                    buffer[n] = 0;
+                    if (strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
+                        write( sockfd_wk, arg->leader_ip, sizeof( arg->leader_ip));
+                    }
+                    close( sockfd_wk);
+                }
+            }
+
+            pthread_mutex_unlock( arg->alive_list_mutex);
+        }
+
+        connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader));
+        write( sockfd_leader, "004\r\n", 5 * sizeof( char));
+        int n = read( sockfd_leader, buffer, MAXLINE);
+        buffer[n] = 0;
+        if (strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+            for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
+                write( sockfd_leader, p->ip, INET_ADDRSTRLEN * sizeof( char));
+            }
+        }
+        close( sockfd_leader);
+        pthread_mutex_unlock( arg->leader_ip_mutex);
+    }
+    return NULL;
 }
