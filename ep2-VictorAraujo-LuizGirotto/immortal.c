@@ -1,5 +1,7 @@
 #include "immortal.h"
 
+#define JURBS 10
+
 void
 immortal( int file_number, char **out_files) {
 
@@ -12,6 +14,9 @@ immortal( int file_number, char **out_files) {
     celula_ip *alive_list = malloc( sizeof( celula_ip));
 
     bool work_left = true;
+    bool no_leader = true;
+
+    int work_done = 0;
 
     char out[MAXLINE + 1];
     char buffer[MAXLINE + 1];
@@ -81,14 +86,18 @@ immortal( int file_number, char **out_files) {
             insere_lln( work_number, work_done_list);
             out_files[work_number] = malloc( sizeof( out));
             strcpy(out_files[work_number], out);
+            work_done++;
+            if (work_done == file_number) {
+                work_left = false;
+            }
         }
         //New machine
         else if (!strncmp( recvline, "202\r\n", 5 * sizeof( char))) {
             write( connfd, "000\r\n", 5 * sizeof( char));
-            n = read( connfd, recvline, MAXLINE);
-            recvline[n] = 0;
+            n = read( connfd, buffer, MAXLINE);
+            buffer[n] = 0;
             pthread_mutex_lock( alive_list_mutex);
-            insere_llip( recvline, alive_list);
+            insere_llip( buffer, alive_list);
             pthread_mutex_unlock( alive_list_mutex);
         }
         //Election request
@@ -97,11 +106,42 @@ immortal( int file_number, char **out_files) {
         }
         //Jobs request
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
+            for (int i = 0; i < JURBS && work_left_list->prox != NULL; i++) {
+                write( connfd, "005\r\n", 5 * sizeof( char));
+                n = read( connfd, buffer, MAXLINE);
+                buffer[n] = 0;
+                if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                    snprintf( buffer, MAXLINE, "%d", work_left_list->prox->workn);
+                    write( connfd, buffer, sizeof( buffer));
+                    if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                        makeFileNameIn( work_left_list->prox->workn, buffer);
+                        sendFile( buffer, connfd);
+                        n = read( connfd, buffer, MAXLINE);
+                        buffer[n] = 0;
+                        if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                            insere_lln( work_left_list->prox->workn, current_work_list);
+                            busca_e_remove_lln( work_left_list->prox->workn, work_left_list);
+                        }
+                    }
+                    else if (!strncmp( buffer, "111\r\n", 5 * sizeof( char))) {
+                        no_leader = true;
+                    }
+                }
+            }
+            /*WILL GO BOOM*/
+            if (work_left_list->prox == NULL) {
+                celula_n *p = work_left_list;
+                work_left_list = current_work_list;
+                current_work_list = p;
+            }
+            write( connfd, "006\r\n", 5 * sizeof( char));
             printf("Imma give this man some jurbs\n");
         }
+        close( connfd);
     }
 
-    close( connfd);
+    /*SEPUKKU ALL THE THINGS*/
+    close( listenfd);
     pthread_mutex_destroy( alive_list_mutex);
     free( work_left_list);
     free( work_done_list);
