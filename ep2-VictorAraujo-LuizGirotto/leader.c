@@ -216,7 +216,7 @@ communist_leader( void *args) {
                         write( sockfd_wk, buffer, sizeof( buffer));
                         read( sockfd_wk, buffer, MAXLINE);
                         if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
-                            makeFileNameIn( arg->work_list->prox->workn, buffer);
+                            makeFileNameIn( arg->work_list->prox->workn, buffer, "LD");
                             sendFile( buffer, sockfd_wk);
                             busca_e_remove_lln( arg->work_list->prox->workn, arg->work_list);
                             close( sockfd_wk);
@@ -271,7 +271,7 @@ communist_leader( void *args) {
 
                     work_number = atoi(buffer);
                     printf("[LD] tenho num %d, vou fazer arquivo\n", work_number);
-                    makeFileNameIn( work_number, buffer);
+                    makeFileNameIn( work_number, buffer, "LD");
                     printf("[LD] tenho o nome de arquivo %s\n", buffer);
                     if ((fd = fopen( buffer, "w")) == NULL) {
                         //LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)
@@ -298,9 +298,9 @@ communist_leader( void *args) {
                     printf("[LD] Recebi o trabalho %d!\n\n", work_number);
                     insere_lln( work_number, arg->work_list);
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
-                    
+
                     break;
-                    
+
                     read( sockfd_im, buffer, MAXLINE);
                     printf("[LD] mandei 100 recebi %s", buffer);
                 }

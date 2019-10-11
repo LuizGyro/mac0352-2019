@@ -88,7 +88,7 @@ newFile( FILE *fd, int file_number) {
     char *name = malloc( 200 * sizeof( char));
     char *number = malloc( 200 * sizeof( char));
 
-    strncpy( name, "splitIn", 200 * sizeof( char));
+    strncpy( name, "splitInIM", 200 * sizeof( char));
     snprintf( number, 200 * sizeof( char), "%d", file_number);
     strncat( name, number, 200 * sizeof( char));
     strncat( name, ".txt", 200 * sizeof( char));
@@ -125,7 +125,7 @@ splitFiles( char *file_name) {
         return EXIT_FAILURE;
     }
 
-    fd2 = fopen( "splitIn0.txt", "w");
+    fd2 = fopen( "splitInIM0.txt", "w");
     if (fd2 == NULL) {
         fprintf( stderr, "%s\n", strerror(errno));
         return EXIT_FAILURE;
@@ -149,9 +149,10 @@ splitFiles( char *file_name) {
 }
 
 void
-makeFileNameIn(int wk_number, char *in) {
+makeFileNameIn(int wk_number, char *in, char *who) {
     char work_number[1000];
     strncpy( in, "splitIn", 1000 * sizeof( char));
+    strncat( in, who, 2 * sizeof( char));
     snprintf( work_number, 1000 * sizeof( char), "%d", wk_number);
     strncat( in, work_number, 1000 * sizeof( char));
     strncat( in, ".txt", 1000 * sizeof( char));
@@ -159,9 +160,10 @@ makeFileNameIn(int wk_number, char *in) {
 }
 
 void
-makeFileNameOut(int wk_number, char *out) {
+makeFileNameOut(int wk_number, char *out, char *who) {
     char work_number[1000];
     strncpy( out, "splitOut", 1000 * sizeof( char));
+    strncat( out, who, 2 * sizeof( char));
     snprintf( work_number, 1000 * sizeof( char), "%d", wk_number);
     strncat( out, work_number, 1000 * sizeof( char));
     strncat( out, ".txt", 1000 * sizeof( char));
@@ -173,11 +175,13 @@ sendFile( char *out, int sockfd) {
     FILE *fd;
     char big_buffer[1000];
     fd = fopen( out, "r");
-    
+
+    printf("[SENDFILE] Entrei!\n");
     while (fgets( big_buffer, 1000, fd) != NULL) {
+        printf("[SENDFILE] Mandando: %s\n", big_buffer);
         write( sockfd, big_buffer, 1000 * sizeof( char));
     }
-    
+
     fclose( fd);
 }
 

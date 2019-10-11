@@ -136,7 +136,7 @@ worker() {
                 write( connfd, "200\r\n", 5 * sizeof( char));
                 read( connfd, buffer, MAXLINE);
                 arg->work_number = atoi(buffer);
-                makeFileNameIn( arg->work_number, buffer);
+                makeFileNameIn( arg->work_number, buffer, "WK");
 
                 if ((fd = fopen( buffer, "w")) == NULL) {
                     fprintf(stderr, "WK-ERROR: Could not open file, %s\n", strerror( errno));
@@ -183,8 +183,8 @@ work(void *args) {
     *(arg->work_done) = false;
     pthread_mutex_unlock( arg->work_done_mutex);
 
-    makeFileNameIn( arg->work_number, in);
-    makeFileNameOut( arg->work_number, out);
+    makeFileNameIn( arg->work_number, in, "WK");
+    makeFileNameOut( arg->work_number, out, "WK");
     orderFile( in, out);
 
     /*Mandar pro imortal o trabalho*/

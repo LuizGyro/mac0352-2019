@@ -106,7 +106,7 @@ immortal( int file_number, char **out_files) {
             n = read( connfd, buffer, MAXLINE);
             buffer[n] = 0;
             int work_number = atoi( buffer);
-            makeFileNameOut( work_number, out);
+            makeFileNameOut( work_number, out, "IM");
             FILE *fd = fopen( out, "w");
             write( connfd, "000\r\n", 5 * sizeof( char));
             while ((read( connfd, buffer, MAXLINE)) > 0) {
@@ -154,9 +154,9 @@ immortal( int file_number, char **out_files) {
 
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                         printf("[IM] AGORA VAI HEIN\n");
-                        makeFileNameIn( work_left_list->prox->workn, buffer);
+                        makeFileNameIn( work_left_list->prox->workn, buffer, "IM");
                         printf("[IM] Vou mandar o %s pro LD\n", buffer);
-                        write( connfd, "1324\0", 5 * sizeof( char));
+                        //write( connfd, "1324\0", 5 * sizeof( char));
                         sendFile( buffer, connfd);
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
