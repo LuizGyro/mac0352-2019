@@ -293,14 +293,12 @@ communist_leader( void *args) {
 
                     while (true) {
                         n = read( sockfd_im, buffer, MAXLINE);
-                        if (n == -1) {
-                            fprintf( stderr, "[LD] ERROR reading: %s\n", strerror( errno));
-                        }
                         printf("[LD] li %s", buffer);
                         if (!strncmp( buffer, "EOF\r\n", 5 * sizeof( char))) {
                             break;
                         }
                         fprintf( fd, "%s", buffer);
+                        write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     }
                     fclose( fd);
                     printf("[LD] Recebi o trabalho %d!\n\n", work_number);

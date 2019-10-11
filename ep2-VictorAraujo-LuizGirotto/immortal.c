@@ -154,18 +154,19 @@ immortal( int file_number, char **out_files) {
 
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                         makeFileNameIn( work_left_list->prox->workn, buffer, "IM");
-                        //printf("[IM] Vou mandar o %s pro LD\n", buffer);
-                        //sendFile( buffer, connfd);
-                            FILE *fd;
-                            char big_buffer[1000];
-                            fd = fopen( buffer, "r");
-                            while (fgets( big_buffer, 1000, fd) != NULL) {
-                                write( connfd, big_buffer, 1000 * sizeof( char));
-                                printf("[IM] Mandei %s", big_buffer);
-                            }
-                            write( connfd, "EOF\r\n", 5 * sizeof( char));
-                            printf("[IM] mandei meu EOF\n");
-                            fclose( fd);
+                        printf("[IM] Vou mandar o %s pro LD\n", buffer);
+                        FILE *fd;
+                        char big_buffer[1000];
+                        fd = fopen( buffer, "r");
+                        while (fgets( big_buffer, 1000, fd) != NULL) {
+                            write( connfd, big_buffer, 1000 * sizeof( char));
+                            n = read( connfd, buffer, MAXLINE);
+                            buffer[n] = 0;
+                            printf("[IM] Mandei %s e recebi %s", big_buffer, buffer);
+                        }
+                        write( connfd, "EOF\r\n", 5 * sizeof( char));
+                        printf("[IM] mandei meu EOF\n");
+                        fclose( fd);
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
                         printf("[IM] mandei arquivo, recebi %s", buffer);
