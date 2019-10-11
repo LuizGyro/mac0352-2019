@@ -260,9 +260,8 @@ communist_leader( void *args) {
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 if((n = read( sockfd_im, buffer, MAXLINE)) < 0) {
                     printf("Estava esperando algo...");
-                };
+                }
                 buffer[n] = 0;
-                printf("[LD] Recebi msg com %ld\n", n);
                 printf("[LD] Mandei 106, recebi %s", buffer);
                 while (!strncmp( buffer, "005\r\n", 5 * sizeof( char))) {
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
@@ -271,9 +270,9 @@ communist_leader( void *args) {
                     printf("[LD] mandei 100 recebi %s\n", buffer);
 
                     work_number = atoi(buffer);
-
+                    printf("[LD] tenho num %d, vou fazer arquivo\n", work_number);
                     makeFileNameIn( work_number, buffer);
-
+                    printf("[LD] tenho o nome de arquivo %s\n", buffer);
                     if ((fd = fopen( buffer, "w")) == NULL) {
                         //LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)
                         fprintf(stderr, "LD-ERROR: Could not open file, %s\n", strerror( errno));
@@ -290,17 +289,22 @@ communist_leader( void *args) {
                         exit( EXIT_FAILURE);
                     }
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
+
                     while ((read( sockfd_im, buffer, MAXLINE)) > 0) {
+                        printf("[LD] li %s\n", buffer);
                         fprintf( fd, "%s", buffer);
                     }
                     fclose( fd);
-                    printf("[LD] Recebi o trabalho %d!\n", work_number);
+                    printf("[LD] Recebi o trabalho %d!\n\n", work_number);
                     insere_lln( work_number, arg->work_list);
-
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
+                    
+                    break;
+                    
                     read( sockfd_im, buffer, MAXLINE);
                     printf("[LD] mandei 100 recebi %s", buffer);
                 }
+                printf("Sai do while\n");
                 close( sockfd_im);
             }
         }

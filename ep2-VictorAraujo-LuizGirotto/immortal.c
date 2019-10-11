@@ -91,12 +91,6 @@ immortal( int file_number, char **out_files) {
         insere_lln( i, work_left_list);
     }
 
-    printf("Imprimindo a lista!!!\n");
-    for (celula_n *p = work_left_list->prox; p != NULL; p = p->prox) {
-        printf("%d\n", p->workn);
-    }
-    printf("Foi as listas\n");
-
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf(stderr, "IM-ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -145,22 +139,33 @@ immortal( int file_number, char **out_files) {
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
             printf("[IM] Lider quer trabalho\n");
             for (int i = 0; i < JURBS && work_left_list->prox != NULL; i++) {
-                printf("Vou forzar, %d\n", i);
+                printf("JURBS\n");
                 write( connfd, "005\r\n", 5 * sizeof( char));
                 n = read( connfd, buffer, MAXLINE);
                 buffer[n] = 0;
                 printf("[IM] Mandei 005, recebi %s", buffer);
                 if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                     snprintf( buffer, MAXLINE, "%d", work_left_list->prox->workn);
+                    printf( "[IM] vou mandar %s\n", buffer);
                     write( connfd, buffer, sizeof( buffer));
                     n = read( connfd, buffer, MAXLINE);
                     buffer[n] = 0;
+                    printf("[IM] recebi %s", buffer);
+
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                         printf("[IM] AGORA VAI HEIN\n");
                         makeFileNameIn( work_left_list->prox->workn, buffer);
+                        printf("[IM] Vou mandar o %s pro LD\n", buffer);
+                        write( connfd, "1324\0", 5 * sizeof( char));
                         sendFile( buffer, connfd);
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
+                        printf("[IM] Dps de mandar arq recebi um %s", buffer);
+                        busca_e_remove_lln( work_left_list->prox->workn, work_left_list); //LEMBRA QUE ISSO NÃO É AQUI
+                        break;
+                    }
+                }
+                    /*
                         printf("[IM] mandei arquivo, recebi %s", buffer);
                         if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                             insere_lln( work_left_list->prox->workn, current_work_list);
@@ -168,16 +173,20 @@ immortal( int file_number, char **out_files) {
                         }
                     }
                 }
+                */
             }
+            sleep(2);
             printf("Forzei\n");
+            /*
             //WILL GO BOOM
             if (work_left_list->prox == NULL) {
                 celula_n *p = work_left_list;
                 work_left_list = current_work_list;
                 current_work_list = p;
             }
+            */
             write( connfd, "006\r\n", 5 * sizeof( char));
-            printf("Imma give this man some jurbs\n");
+            printf("Imma gave this man some jurbs\n");
         }
         printf("[IM] Fechei a conexao. work_left: %d\n", work_left);
         close( connfd);

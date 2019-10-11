@@ -171,17 +171,13 @@ makeFileNameOut(int wk_number, char *out) {
 void
 sendFile( char *out, int sockfd) {
     FILE *fd;
-    char *big_buffer;
-    struct stat *file_mdata = malloc( sizeof( struct stat));
+    char big_buffer[1000];
     fd = fopen( out, "r");
-    stat( out, file_mdata);
-    big_buffer = malloc( file_mdata->st_size);
-
-    fread( big_buffer, 1, file_mdata->st_size, fd);
-    write( sockfd, big_buffer, strlen( big_buffer));
-
-    free( big_buffer);
-    free( file_mdata);
+    
+    while (fgets( big_buffer, 1000, fd) != NULL) {
+        write( sockfd, big_buffer, 1000 * sizeof( char));
+    }
+    
     fclose( fd);
 }
 
