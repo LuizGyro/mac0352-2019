@@ -122,7 +122,9 @@ worker() {
         }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
-        printf("[WK] recebeu: %s", recvline);
+        pthread_mutex_lock( work_done_mutex);
+        printf("[WK] recebeu: %s. Sem trabalhar: %d\n", recvline, work_done);
+        pthread_mutex_unlock( work_done_mutex);
         if (!strncmp( recvline, "001\r\n", 5 * sizeof( char))) {
             if ((leader_pid = fork()) == 0) {
                 close( connfd);
@@ -154,6 +156,7 @@ worker() {
                     write(connfd, "200\r\n", 5 * sizeof( char));
                 }
                 fclose( fd);
+                work_done = false;
                 if (pthread_create( thread, NULL, work, arg)) {
                     fprintf(stderr, "WK-ERROR: Could not create thread\n");
                 }
@@ -184,10 +187,6 @@ work(void *args) {
     work_args *arg = (work_args *) args;
     char in[1000];
     char out[1000];
-
-    pthread_mutex_lock( arg->work_done_mutex);
-    *(arg->work_done) = false;
-    pthread_mutex_unlock( arg->work_done_mutex);
 
     makeFileNameIn( arg->work_number, in, "WK");
     makeFileNameOut( arg->work_number, out, "WK");
@@ -226,12 +225,31 @@ work(void *args) {
         n = read( sockfd, recvline, MAXLINE);
         recvline[n] = 0;
         if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
-            sendFile( out, sockfd);
+            FILE *fdt;
+            char big_buffer[1000];
+            fdt = fopen( out, "r");
+            printf("[WK] ABRI O ARQUIVO %s PRA MANDAR PRO IM\n", out);
+            while (fgets( big_buffer, 1000, fdt) != NULL) {
+                printf("[WK] vou mandar pro IM %s", big_buffer);
+                write( sockfd, big_buffer, 1000 * sizeof( char));
+                n = read( sockfd, out, MAXLINE);
+                buffer[n] = 0;
+                printf("[WK] Mandei %s e recebi %s", big_buffer, buffer);
+            }
+            write( sockfd, "EOF\r\n", 5 * sizeof( char));
+            printf("[WK] mandei meu EOF\n");
+            n = read( sockfd, recvline, MAXLINE);
+            recvline[n] = 0;
+            if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
+                printf("[WK] Trabalho entregue com sucesso! %d\n", arg->work_number);
+            }
+            fclose( fdt);
         }
     }
     close( sockfd);
     pthread_mutex_lock( arg->work_done_mutex);
     *(arg->work_done) = true;
     pthread_mutex_unlock( arg->work_done_mutex);
+    pthread_exit(NULL);
     return NULL;
 }

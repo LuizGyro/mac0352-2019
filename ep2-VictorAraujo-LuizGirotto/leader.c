@@ -22,7 +22,7 @@
 
 int
 leader() {
-    printf("Yo bitch, I made it BIG motherfucker\n");
+    printf("[LD] Lider criado\n");
     char buffer[MAXLINE];
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
@@ -124,13 +124,11 @@ leader() {
             write( connfd_ld, "103\r\n", 5 * sizeof( char));
         }
         else if (!strncmp( recvline, "004\r\n", 5 * sizeof( char))) {
-            printf("[LD] CLEANING ALIVE LIST\n");
             limpa_llip( alive_list);
             write( connfd_ld, "100\r\n", 5 * sizeof( char));
             while ((read( connfd_ld, buffer, MAXLINE)) > 0) {
                 pthread_mutex_lock( alive_list_mutex);
                 insere_llip( buffer, alive_list);
-                printf("[LD] Added to alive_list: %s\n", buffer);
                 pthread_mutex_unlock( alive_list_mutex);
             }
         }
@@ -152,7 +150,8 @@ leader() {
 void *
 communist_leader( void *args) {
     int sockfd_im;
-    char buffer[MAXLINE];
+    char buffer1[MAXLINE];
+    char buffer2[MAXLINE];
     struct sockaddr_in servaddr_im;
     bool alive = true;
 
@@ -211,28 +210,26 @@ communist_leader( void *args) {
                 else {
                     ssize_t n;
                     write(sockfd_wk, "102\r\n", 5 * sizeof( char));
-                    read( sockfd_wk, buffer, MAXLINE);
-                    if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
-                        snprintf( buffer, MAXLINE, "%d", arg->work_list->prox->workn);
-                        write( sockfd_wk, buffer, strlen( buffer) * sizeof( char));
-                        n = read( sockfd_wk, buffer, MAXLINE);
-                        buffer[n] = 0;
-                        if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
-                            makeFileNameIn( arg->work_list->prox->workn, buffer, "LD");
-                            //sendFile( buffer, sockfd_wk);
+                    read( sockfd_wk, buffer1, MAXLINE);
+                    if (!strncmp( buffer1, "200\r\n", 5 * sizeof( char))) {
+                        snprintf( buffer1, MAXLINE, "%d", arg->work_list->prox->workn);
+                        write( sockfd_wk, buffer1, strlen( buffer1) * sizeof( char));
+                        n = read( sockfd_wk, buffer1, MAXLINE);
+                        buffer1[n] = 0;
+                        if (!strncmp( buffer1, "200\r\n", 5 * sizeof( char))) {
+                            printf("[LD] Enviando trabalho %d\n", arg->work_list->prox->workn);
+                            makeFileNameIn( arg->work_list->prox->workn, buffer1, "LD");
+                            //sendFile( buffer1, sockfd_wk);
 
                             FILE *fd;
                             char big_buffer[1000];
-                            fd = fopen( buffer, "r");
+                            fd = fopen( buffer1, "r");
                             while (fgets( big_buffer, 1000, fd) != NULL) {
-                                printf("[LD] vou mandar pro WK %s", big_buffer);
                                 write( sockfd_wk, big_buffer, 1000 * sizeof( char));
-                                n = read( sockfd_wk, buffer, MAXLINE);
-                                buffer[n] = 0;
-                                printf("[LD] Mandei %s e recebi %s", big_buffer, buffer);
+                                n = read( sockfd_wk, buffer1, MAXLINE);
+                                buffer1[n] = 0;
                             }
                             write( sockfd_wk, "EOF\r\n", 5 * sizeof( char));
-                            printf("[LD] mandei meu EOF\n");
                             fclose( fd);
 
                             busca_e_remove_lln( arg->work_list->prox->workn, arg->work_list);
@@ -273,22 +270,20 @@ communist_leader( void *args) {
                     continue;
                 }
                 ssize_t n;
-                printf("[LD] Vou avisar que eu quero trabalho\n");
+                printf("[LD] Pedindo novos trabalhos para o imortal\n");
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
-                if((n = read( sockfd_im, buffer, MAXLINE)) < 0) {
-                    printf("Estava esperando algo...");
+                if((n = read( sockfd_im, buffer2, MAXLINE)) < 0) {
+                    printf("[LD] Pedido de trabalho sem tamanho.\n");
+                    continue;
                 }
-                buffer[n] = 0;
-                printf("[LD] Mandei 106, recebi %s", buffer);
-                while (!strncmp( buffer, "005\r\n", 5 * sizeof( char))) {
+                buffer2[n] = 0;
+                while (!strncmp( buffer2, "005\r\n", 5 * sizeof( char))) {
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
-                    n = read( sockfd_im, buffer, MAXLINE);
-                    buffer[n] = 0;
-                    printf("[LD] mandei 100 recebi %s\n", buffer);
+                    n = read( sockfd_im, buffer2, MAXLINE);
+                    buffer2[n] = 0;
 
-                    work_number = atoi(buffer);
-                    makeFileNameIn( work_number, buffer, "LD");
-                    printf("[LD] tenho o nome de arquivo %s\n", buffer);
+                    work_number = atoi(buffer2);
+                    makeFileNameIn( work_number, buffer2, "LD");
                     /*
                     if ((fd = fopen( buffer, "w")) == NULL) {
                         fprintf(stderr, "LD-ERROR: Could not open file, %s\n", strerror( errno));
@@ -305,26 +300,24 @@ communist_leader( void *args) {
                         exit( EXIT_FAILURE);
                     }
                     */
-                    FILE *fd = fopen( buffer, "w");
+                    FILE *fd = fopen( buffer2, "w");
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
 
                     while (true) {
-                        n = read( sockfd_im, buffer, MAXLINE);
-                        printf("[LD] li %s", buffer);
-                        if (!strncmp( buffer, "EOF\r\n", 5 * sizeof( char))) {
+                        n = read( sockfd_im, buffer2, MAXLINE);
+                        if (!strncmp( buffer2, "EOF\r\n", 5 * sizeof( char))) {
                             break;
                         }
-                        fprintf( fd, "%s", buffer);
+                        fprintf( fd, "%s", buffer2);
                         write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     }
                     fclose( fd);
-                    printf("[LD] Recebi o trabalho %d!\n\n", work_number);
+                    printf("[LD] Recebi o trabalho %d!\n", work_number);
                     insere_lln( work_number, arg->work_list);
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
-                    read( sockfd_im, buffer, MAXLINE);
-                    printf("[LD] mandei 100 recebi %s", buffer);
+                    read( sockfd_im, buffer2, MAXLINE);
                 }
-                printf("Sai do while\n");
+                printf("[LD] Terminei de receber trabalhos\n");
                 close( sockfd_im);
             }
         }

@@ -11,6 +11,7 @@ getMinInd( long long int *arr, int n) {
 
 void
 fkmerge( char *out_name, char **files, int n) {
+    printf("[OUT] Hora do fkmerge!\n");
     long long int *arr = malloc( n * sizeof( long long int));
     FILE **fds = malloc( n * sizeof( FILE *));
     FILE *out_fd = fopen( out_name, "w");

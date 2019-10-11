@@ -110,9 +110,15 @@ immortal( int file_number, char **out_files) {
             FILE *fd = fopen( out, "w");
             write( connfd, "000\r\n", 5 * sizeof( char));
             while ((read( connfd, buffer, MAXLINE)) > 0) {
+                if (!strncmp( buffer, "EOF\r\n", 5 * sizeof( char))) {
+                    break;
+                }
                 fprintf( fd, "%s", buffer);
+                printf("[IM] recebi algo do WK %s", buffer);
+                write(connfd, "200\r\n", 5 * sizeof( char));
             }
             fclose( fd);
+            write( connfd, "000\r\n", 5 * sizeof( char));
             busca_e_remove_lln( work_number, current_work_list);
             insere_lln( work_number, work_done_list);
             out_files[work_number] = malloc( strlen( out) * sizeof( char));
@@ -133,28 +139,23 @@ immortal( int file_number, char **out_files) {
         }
         //Election request
         else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {
-            printf("Imma pick a leader\n");
+            printf("[IM] Fazendo eleicao requerida\n");
         }
         //Jobs request
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
-            printf("[IM] Lider quer trabalho\n");
             for (int i = 0; i < JURBS && work_left_list->prox != NULL; i++) {
-                printf("JURBS\n");
+                printf("[IM] Enviando trabalho numero %d para lider\n", work_left_list->prox->workn);
                 write( connfd, "005\r\n", 5 * sizeof( char));
                 n = read( connfd, buffer, MAXLINE);
                 buffer[n] = 0;
-                printf("[IM] Mandei 005, recebi %s", buffer);
                 if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                     snprintf( buffer, MAXLINE, "%d", work_left_list->prox->workn);
-                    printf( "[IM] vou mandar %s\n", buffer);
                     write( connfd, buffer, strlen(buffer) * sizeof( char));
                     n = read( connfd, buffer, MAXLINE);
                     buffer[n] = 0;
-                    printf("[IM] recebi %s", buffer);
 
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                         makeFileNameIn( work_left_list->prox->workn, buffer, "IM");
-                        printf("[IM] Vou mandar o %s pro LD\n", buffer);
                         FILE *fd;
                         char big_buffer[1000];
                         fd = fopen( buffer, "r");
@@ -162,14 +163,11 @@ immortal( int file_number, char **out_files) {
                             write( connfd, big_buffer, 1000 * sizeof( char));
                             n = read( connfd, buffer, MAXLINE);
                             buffer[n] = 0;
-                            printf("[IM] Mandei %s e recebi %s", big_buffer, buffer);
                         }
                         write( connfd, "EOF\r\n", 5 * sizeof( char));
-                        printf("[IM] mandei meu EOF\n");
                         fclose( fd);
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
-                        printf("[IM] mandei arquivo, recebi %s", buffer);
                         if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                             insere_lln( work_left_list->prox->workn, current_work_list);
                             busca_e_remove_lln( work_left_list->prox->workn, work_left_list);
@@ -178,7 +176,6 @@ immortal( int file_number, char **out_files) {
                 }
             }
             sleep(2);
-            printf("Forzei\n");
             /*
             //WILL GO BOOM
             if (work_left_list->prox == NULL) {
@@ -188,13 +185,13 @@ immortal( int file_number, char **out_files) {
             }
             */
             write( connfd, "006\r\n", 5 * sizeof( char));
-            printf("Imma gave this man some jurbs\n");
+            printf("[IM] Nao enviarei mais trabalhos para o lider.\n");
         }
-        printf("[IM] Fechei a conexao. work_left: %d\n", work_left);
+        printf("[IM] Fechei a ultima conexao. Continuarei: %d\n", work_left);
         close( connfd);
     }
     //SEPUKKU ALL THE THINGS
-    printf("Imma die ?\n");
+    printf("[IM] Preparando-se para acabar\n");
     close( listenfd);
     pthread_mutex_destroy( alive_list_mutex);
     free( work_left_list);
