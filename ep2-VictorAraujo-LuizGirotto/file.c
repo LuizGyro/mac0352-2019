@@ -181,7 +181,6 @@ sendFile( char *out, int sockfd) {
         printf("[SENDFILE] Mandando: %s\n", big_buffer);
         write( sockfd, big_buffer, 1000 * sizeof( char));
     }
-
     fclose( fd);
 }
 

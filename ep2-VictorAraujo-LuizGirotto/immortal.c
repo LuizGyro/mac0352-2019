@@ -115,7 +115,7 @@ immortal( int file_number, char **out_files) {
             fclose( fd);
             busca_e_remove_lln( work_number, current_work_list);
             insere_lln( work_number, work_done_list);
-            out_files[work_number] = malloc( sizeof( out));
+            out_files[work_number] = malloc( strlen( out) * sizeof( char));
             strcpy(out_files[work_number], out);
             work_done++;
             if (work_done == file_number) {
@@ -147,25 +147,27 @@ immortal( int file_number, char **out_files) {
                 if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                     snprintf( buffer, MAXLINE, "%d", work_left_list->prox->workn);
                     printf( "[IM] vou mandar %s\n", buffer);
-                    write( connfd, buffer, sizeof( buffer));
+                    write( connfd, buffer, strlen(buffer) * sizeof( char));
                     n = read( connfd, buffer, MAXLINE);
                     buffer[n] = 0;
                     printf("[IM] recebi %s", buffer);
 
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
-                        printf("[IM] AGORA VAI HEIN\n");
                         makeFileNameIn( work_left_list->prox->workn, buffer, "IM");
-                        printf("[IM] Vou mandar o %s pro LD\n", buffer);
-                        //write( connfd, "1324\0", 5 * sizeof( char));
-                        sendFile( buffer, connfd);
+                        //printf("[IM] Vou mandar o %s pro LD\n", buffer);
+                        //sendFile( buffer, connfd);
+                            FILE *fd;
+                            char big_buffer[1000];
+                            fd = fopen( buffer, "r");
+                            while (fgets( big_buffer, 1000, fd) != NULL) {
+                                write( connfd, big_buffer, 1000 * sizeof( char));
+                                printf("[IM] Mandei %s", big_buffer);
+                            }
+                            write( connfd, "EOF\r\n", 5 * sizeof( char));
+                            printf("[IM] mandei meu EOF\n");
+                            fclose( fd);
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
-                        printf("[IM] Dps de mandar arq recebi um %s", buffer);
-                        busca_e_remove_lln( work_left_list->prox->workn, work_left_list); //LEMBRA QUE ISSO NÃO É AQUI
-                        break;
-                    }
-                }
-                    /*
                         printf("[IM] mandei arquivo, recebi %s", buffer);
                         if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                             insere_lln( work_left_list->prox->workn, current_work_list);
@@ -173,7 +175,6 @@ immortal( int file_number, char **out_files) {
                         }
                     }
                 }
-                */
             }
             sleep(2);
             printf("Forzei\n");

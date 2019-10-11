@@ -157,7 +157,7 @@ communist_leader( void *args) {
     bool alive = true;
 
     int work_number;
-    FILE *fd;
+    //FILE *fd;
 
     leader_args *arg = (leader_args *) args;
 
@@ -270,11 +270,10 @@ communist_leader( void *args) {
                     printf("[LD] mandei 100 recebi %s\n", buffer);
 
                     work_number = atoi(buffer);
-                    printf("[LD] tenho num %d, vou fazer arquivo\n", work_number);
                     makeFileNameIn( work_number, buffer, "LD");
                     printf("[LD] tenho o nome de arquivo %s\n", buffer);
+                    /*
                     if ((fd = fopen( buffer, "w")) == NULL) {
-                        //LEMBRAR QUE O LIDER MORRE (na hora de fazer o imortal)
                         fprintf(stderr, "LD-ERROR: Could not open file, %s\n", strerror( errno));
                         write( sockfd_im, "111\r\n", 5 * sizeof( char));
                         limpa_llip( arg->alive_list);
@@ -288,19 +287,25 @@ communist_leader( void *args) {
                         close( sockfd_im);
                         exit( EXIT_FAILURE);
                     }
+                    */
+                    FILE *fd = fopen( buffer, "w");
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
 
-                    while ((read( sockfd_im, buffer, MAXLINE)) > 0) {
-                        printf("[LD] li %s\n", buffer);
+                    while (true) {
+                        n = read( sockfd_im, buffer, MAXLINE);
+                        if (n == -1) {
+                            fprintf( stderr, "[LD] ERROR reading: %s\n", strerror( errno));
+                        }
+                        printf("[LD] li %s", buffer);
+                        if (!strncmp( buffer, "EOF\r\n", 5 * sizeof( char))) {
+                            break;
+                        }
                         fprintf( fd, "%s", buffer);
                     }
                     fclose( fd);
                     printf("[LD] Recebi o trabalho %d!\n\n", work_number);
                     insere_lln( work_number, arg->work_list);
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
-
-                    break;
-
                     read( sockfd_im, buffer, MAXLINE);
                     printf("[LD] mandei 100 recebi %s", buffer);
                 }
