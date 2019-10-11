@@ -178,11 +178,6 @@ communist_leader( void *args) {
     int sockfd_wk;
     struct sockaddr_in servaddr_wk;
 
-    if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-        fprintf( stderr, "LD-ERROR: could not create socket, %s\n", strerror( errno));
-        exit( EXIT_FAILURE);
-    }
-
     bzero( &servaddr_wk, sizeof( servaddr_wk));
     servaddr_wk.sin_family = AF_INET;
     servaddr_wk.sin_port = htons( WORKER_PORT);
@@ -198,26 +193,48 @@ communist_leader( void *args) {
             pthread_mutex_lock( arg->alive_list_mutex);
             p = arg->alive_list->prox;
             while (p != NULL) {
+                if ((sockfd_wk = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                   fprintf( stderr, "LD-ERROR: could not create socket, %s\n", strerror( errno));
+                   exit( EXIT_FAILURE);
+                }
+
                 if (inet_pton(AF_INET, p->ip, &servaddr_wk.sin_addr) != 1) {
                     perror( "inet_pton");
                     exit( EXIT_FAILURE);
                 }
                 /* Fazer timeout deste socket ser mais curto do que o normal */
                 if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
-                    fprintf( stderr, "LD-Failed to connect to worker.\n");
+                    fprintf( stderr, "LD-Failed to connect to worker. %s\n", strerror( errno));
                     printf("IP de tentativa falha de conexao: %s\n", p->ip);
                 }
 
                 else {
+                    ssize_t n;
                     write(sockfd_wk, "102\r\n", 5 * sizeof( char));
                     read( sockfd_wk, buffer, MAXLINE);
                     if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
                         snprintf( buffer, MAXLINE, "%d", arg->work_list->prox->workn);
-                        write( sockfd_wk, buffer, sizeof( buffer));
-                        read( sockfd_wk, buffer, MAXLINE);
+                        write( sockfd_wk, buffer, strlen( buffer) * sizeof( char));
+                        n = read( sockfd_wk, buffer, MAXLINE);
+                        buffer[n] = 0;
                         if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
                             makeFileNameIn( arg->work_list->prox->workn, buffer, "LD");
-                            sendFile( buffer, sockfd_wk);
+                            //sendFile( buffer, sockfd_wk);
+
+                            FILE *fd;
+                            char big_buffer[1000];
+                            fd = fopen( buffer, "r");
+                            while (fgets( big_buffer, 1000, fd) != NULL) {
+                                printf("[LD] vou mandar pro WK %s", big_buffer);
+                                write( sockfd_wk, big_buffer, 1000 * sizeof( char));
+                                n = read( sockfd_wk, buffer, MAXLINE);
+                                buffer[n] = 0;
+                                printf("[LD] Mandei %s e recebi %s", big_buffer, buffer);
+                            }
+                            write( sockfd_wk, "EOF\r\n", 5 * sizeof( char));
+                            printf("[LD] mandei meu EOF\n");
+                            fclose( fd);
+
                             busca_e_remove_lln( arg->work_list->prox->workn, arg->work_list);
                             close( sockfd_wk);
                             break;

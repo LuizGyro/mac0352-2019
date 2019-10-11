@@ -136,8 +136,9 @@ worker() {
                 write( connfd, "200\r\n", 5 * sizeof( char));
                 read( connfd, buffer, MAXLINE);
                 arg->work_number = atoi(buffer);
-                makeFileNameIn( arg->work_number, buffer, "WK");
+                write( connfd, "200\r\n", 5 * sizeof( char));
 
+                makeFileNameIn( arg->work_number, buffer, "WK");
                 if ((fd = fopen( buffer, "w")) == NULL) {
                     fprintf(stderr, "WK-ERROR: Could not open file, %s\n", strerror( errno));
                     write( connfd, "211\r\n", 5 * sizeof( char));
@@ -145,7 +146,12 @@ worker() {
                 }
                 write( connfd, "200\r\n", 5 * sizeof( char));
                 while ((read( connfd, buffer, MAXLINE)) > 0) {
+                    if (!strncmp( buffer, "EOF\r\n", 5 * sizeof( char))) {
+                        break;
+                    }
                     fprintf( fd, "%s", buffer);
+                    printf("[WK] recebi algo do LD %s", buffer);
+                    write(connfd, "200\r\n", 5 * sizeof( char));
                 }
                 fclose( fd);
                 if (pthread_create( thread, NULL, work, arg)) {
@@ -185,6 +191,7 @@ work(void *args) {
 
     makeFileNameIn( arg->work_number, in, "WK");
     makeFileNameOut( arg->work_number, out, "WK");
+    printf("[WK] sou uma thread e vou ordenar %d\n\n", arg->work_number);
     orderFile( in, out);
 
     /*Mandar pro imortal o trabalho*/
