@@ -154,6 +154,7 @@ worker() {
                     write(connfd, "200\r\n", 5 * sizeof( char));
                 }
                 fclose( fd);
+                *(arg->work_done) = false;
                 if (pthread_create( thread, NULL, work, arg)) {
                     fprintf(stderr, "WK-ERROR: Could not create thread\n");
                 }
@@ -184,10 +185,6 @@ work(void *args) {
     work_args *arg = (work_args *) args;
     char in[1000];
     char out[1000];
-
-    pthread_mutex_lock( arg->work_done_mutex);
-    *(arg->work_done) = false;
-    pthread_mutex_unlock( arg->work_done_mutex);
 
     makeFileNameIn( arg->work_number, in, "WK");
     makeFileNameOut( arg->work_number, out, "WK");
