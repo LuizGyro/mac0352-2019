@@ -1,0 +1,52 @@
+////////////////////////////////////////////////////
+/////////////////////// EP 2 ///////////////////////
+////////////////////////////////////////////////////
+// Nome: Victor Chiaradia Gramuglia Araujo /////////
+////////////////// NUSP: 9793756 ///////////////////
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+//////// Nome: Luiz Felipe Moumdjian Girotto ///////
+////////////////// NUSP: 8941189 ///////////////////
+////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////
+/////////////////// Como Executar //////////////////
+////////////////////////////////////////////////////
+
+Para compilar o EP, basta utilizar o comando "make".
+
+Se desejar limpar os arquivos intermediarios criados ao rodar o EP,
+basta utilizar o comando "make clean".
+
+Para executar o EP, basta usar o comando "$ ./ep2 $1", onde $1 é o
+arquivo a ser ordenado. Se este argumento for especificado, o
+computador sera considerado o "primeiro computador" e, caso contrario,
+o computador tentara encontrar-se com este.
+
+//////////////////////////////////////////////////////////////////////
+/////////////////// Especificações dos Desenvolvedores ///////////////
+//////////////////////////////////////////////////////////////////////
+
+Este EP foi desenvolvido em um Lenovo Ideapad 330S, rodando Manjaro
+Linux XFCE versão 18.0.4. O compilador utilizado foi o gcc, versão
+8.2.1. Também foi utilizado um PC rodando Ubuntu 18.04 e gcc 7.4.0.
+
+
+///////////////////////////////////////////////////////////////////
+////////////////////////// Considerações ////////////////////////// 
+///////////////////////////////////////////////////////////////////
+
+Dados sobre o protocolo utilizado, a estrutura do EP, e a 
+metodologia de implementacao, e a estrutura e logica que
+consitutuem o EP encontram-se nos slides requeridos.
+
+Ao rodar o EP, é possivel receber uma grande quantidade de mensagens
+de "connection refused", por parte do worker. Isto ocorre por conta
+do tempo necessário para criar o listener do imortal ser superior
+ao tempo necessário para o worker tentar comunicar-se com o mesmo.
+
+Caso esteja testando em um único computador, e surjam diversas
+mensagens de impossibilidade de conectar-se com o lider, é bastante
+provavel que o lider anterior tenha requerido uma eleição, e que
+a porta que estava sendo utilizada pelo lider anterior ainda nao
+tenha sido liberada pelo sistema para novo uso.
