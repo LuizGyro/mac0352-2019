@@ -188,6 +188,7 @@ immortal( int file_number, char **out_files) {
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
                         if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                            printf("AQUI!!!!!!!!!!!! Inserindo %d na current_work_list\n", work_left_list->prox->workn);
                             insere_lln( work_left_list->prox->workn, current_work_list);
                             busca_e_remove_lln( work_left_list->prox->workn, work_left_list);
                         }
@@ -276,11 +277,18 @@ heartbeat( void *args) {
                     trabalho. Logo, fazemos por seguranca */
                     pthread_mutex_lock( arg->work_lists_mutex);
                     printf("[IM] Someone went boom, and we're not risking it\n");
-                    celula_n *q;
-                    for (q = arg->current_work_list->prox; q != NULL; q = q->prox) {
+                    celula_n *q, *k;
+                    q = malloc (sizeof( celula_n));
+                    for (k = arg->current_work_list->prox; k != NULL; k = k->prox) {
+                        printf("[IM] Present work number: %d\n", k->workn);
+                        insere_lln(k->workn, q);
+                    }
+                    for (q = q->prox; q != NULL; q = q->prox) {
+                        printf("[IM] Rescued work number: %d\n", q->workn);
                         insere_lln( q->workn, arg->work_left_list);
                         busca_e_remove_lln( q->workn, arg->current_work_list);
                     }
+                    free (q);
                     pthread_mutex_unlock( arg->work_lists_mutex);
                     break;
                 }
@@ -355,11 +363,18 @@ heartbeat( void *args) {
             seus trabalhos. Logo, fazemos por seguranca */
             pthread_mutex_lock( arg->work_lists_mutex);
             printf("[IM] Someone went boom, and we're not risking it\n");
-            celula_n *q;
-            for (q = arg->current_work_list->prox; q != NULL; q = q->prox) {
+            celula_n *q, *k;
+            q = malloc (sizeof( celula_n));
+            for (k = arg->current_work_list->prox; k != NULL; k = k->prox) {
+                printf("[IM] Present work number: %d\n", k->workn);
+                insere_lln(k->workn, q);
+            }
+            for (q = q->prox; q != NULL; q = q->prox) {
+                printf("[IM] Rescued work number: %d\n", q->workn);
                 insere_lln( q->workn, arg->work_left_list);
                 busca_e_remove_lln( q->workn, arg->current_work_list);
             }
+            free (q);
             pthread_mutex_unlock( arg->work_lists_mutex);
 
             for (p = arg->alive_list->prox; p != NULL; p = p->prox) {
