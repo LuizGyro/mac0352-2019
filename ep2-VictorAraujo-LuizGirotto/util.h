@@ -14,4 +14,7 @@ int getIP(char *ip, int ipsize);
 ** no arquivo de configuracao, em formato IPv4 */
 char *getImmortalIP();
 
+/* Sleeps for msec miliseconds */
+int msleep(long msec);
+
 #endif

@@ -154,7 +154,7 @@ worker() {
                     fprintf( fd, "%s", buffer);
                     printf("[WK] recebi algo do LD %s", buffer);
                     write(connfd, "200\r\n", 5 * sizeof( char));
-                    sleep(1);
+                    msleep(100);
                 }
                 fclose( fd);
                 work_done = false;
@@ -235,7 +235,7 @@ work(void *args) {
                 write( sockfd, big_buffer, 1000 * sizeof( char));
                 n = read( sockfd, out, MAXLINE);
                 buffer[n] = 0;
-                sleep(1);
+                msleep(100);
                 printf("[WK] Mandei %s e recebi %s", big_buffer, buffer);
             }
             write( sockfd, "EOF\r\n", 5 * sizeof( char));

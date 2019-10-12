@@ -1,6 +1,6 @@
 #include "immortal.h"
 
-#define JURBS 10
+#define JURBS 2
 
 void
 immortal( int file_number, char **out_files) {
@@ -116,7 +116,7 @@ immortal( int file_number, char **out_files) {
                 fprintf( fd, "%s", buffer);
                 printf("[IM] recebi algo do WK %s", buffer);
                 write(connfd, "200\r\n", 5 * sizeof( char));
-                sleep(1);
+                msleep(100);
             }
             fclose( fd);
             write( connfd, "000\r\n", 5 * sizeof( char));
