@@ -20,6 +20,9 @@
 #define MAXDATASIZE 100
 #define MAXLINE 4096
 
+#define LOGFILE "logLD.txt"
+FILE *log_ld;
+
 int
 leader() {
     printf("[LD] Lider criado\n");
@@ -108,6 +111,14 @@ leader() {
     args->is_leader = &is_leader;
 
     pthread_create( thread, NULL, communist_leader, args);
+
+    log_ld = fopen( LOGFILE, "w");
+
+    if (DEBUG) {
+        log_datetime( log_ld);
+        fprintf( log_ld, "Inicio de meu tempo de lider\n");
+    }
+
     while (is_leader) {
         if ((connfd_ld = accept( listenfd_ld, (struct sockaddr *) NULL, NULL)) == -1) {
             fprintf(stderr, "LD-ERROR: Could not accept connection, %s\n", strerror( errno));
@@ -148,6 +159,14 @@ leader() {
     free( alive_list_mutex);
     close( listenfd_ld);
     free( args);
+
+    fclose(log_ld);
+
+    if (DEBUG) {
+        log_datetime( log_ld);
+        fprintf( log_ld, "Termino do meu tempo de lider\n");
+    }
+
     exit( EXIT_SUCCESS);
 }
 
@@ -184,7 +203,6 @@ communist_leader( void *args) {
     bzero( &servaddr_wk, sizeof( servaddr_wk));
     servaddr_wk.sin_family = AF_INET;
     servaddr_wk.sin_port = htons( WORKER_PORT);
-
 
     while (alive) {
         pthread_mutex_lock( arg->work_list_mutex);
@@ -236,6 +254,11 @@ communist_leader( void *args) {
                             }
                             write( sockfd_wk, "EOF\r\n", 5 * sizeof( char));
                             fclose( fd);
+
+                            if (DEBUG) {
+                                log_datetime( log_ld);
+                                fprintf( log_ld, "Enviei o trabalho %d para um worker (%s)\n", arg->work_list->prox->workn, p->ip);
+                            }
 
                             busca_e_remove_lln( arg->work_list->prox->workn, arg->work_list);
                             close( sockfd_wk);
@@ -290,22 +313,7 @@ communist_leader( void *args) {
 
                     work_number = atoi(buffer2);
                     makeFileNameIn( work_number, buffer2, "LD");
-                    /*
-                    if ((fd = fopen( buffer, "w")) == NULL) {
-                        fprintf(stderr, "LD-ERROR: Could not open file, %s\n", strerror( errno));
-                        write( sockfd_im, "111\r\n", 5 * sizeof( char));
-                        limpa_llip( arg->alive_list);
-                        limpa_lln( arg->work_list);
-                        free( arg->alive_list);
-                        free( arg->work_list);
-                        pthread_mutex_destroy( arg->work_list_mutex);
-                        free( arg->work_list_mutex);
-                        pthread_mutex_destroy( arg->alive_list_mutex);
-                        free( arg->alive_list_mutex);
-                        close( sockfd_im);
-                        exit( EXIT_FAILURE);
-                    }
-                    */
+
                     FILE *fd = fopen( buffer2, "w");
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
 
@@ -319,6 +327,10 @@ communist_leader( void *args) {
                     }
                     fclose( fd);
                     printf("[LD] Recebi o trabalho %d!\n", work_number);
+                    if (DEBUG) {
+                        log_datetime( log_ld);
+                        fprintf( log_ld, "Recebi o trabalho %d do immortal\n", work_number);
+                    }
                     insere_lln( work_number, arg->work_list);
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     read( sockfd_im, buffer2, MAXLINE);

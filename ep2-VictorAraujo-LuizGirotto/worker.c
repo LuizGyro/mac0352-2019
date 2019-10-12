@@ -21,6 +21,8 @@
 #define MAXDATASIZE 100
 #define MAXLINE 4096
 
+#define LOGFILE "logWK.txt"
+FILE *log_wk;
 
 int
 worker() {
@@ -117,6 +119,12 @@ worker() {
     }
     /*Fim do roubo*/
 
+    log_wk = fopen( LOGFILE, "w");
+
+    if (DEBUG) {
+        log_datetime( log_wk);
+        fprintf( log_wk, "Inicio da minha vida de worker\n");
+    }
 
     while (work_left) {
         if ((connfd = accept( listenfd, (struct sockaddr *) NULL, NULL)) == -1) {
@@ -147,6 +155,7 @@ worker() {
                 if ((fd = fopen( buffer, "w")) == NULL) {
                     fprintf(stderr, "WK-ERROR: Could not open file, %s\n", strerror( errno));
                     write( connfd, "211\r\n", 5 * sizeof( char));
+                    fclose(log_wk);
                     exit( EXIT_FAILURE);
                 }
                 write( connfd, "200\r\n", 5 * sizeof( char));
@@ -158,6 +167,10 @@ worker() {
                     printf("[WK] recebi algo do LD %s", buffer);
                     write(connfd, "200\r\n", 5 * sizeof( char));
                     msleep(200);
+                }
+                if (DEBUG) {
+                    log_datetime( log_wk);
+                    fprintf( log_wk, "Recebi o trabalho %d do lider\n", arg->work_number);
                 }
                 fclose( fd);
                 work_done = false;
@@ -190,6 +203,15 @@ worker() {
     free( work_done_mutex);
     free( thread);
     free( arg);
+
+
+    if (DEBUG) {
+        log_datetime( log_wk);
+        fprintf( log_wk, "Termino da minha vida de worker\n");
+    }
+
+    fclose(log_wk);
+
     exit( EXIT_SUCCESS);
 }
 

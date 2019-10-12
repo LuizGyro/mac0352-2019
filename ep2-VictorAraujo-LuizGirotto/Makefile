@@ -13,4 +13,5 @@ clean:
 	rm *.o
 	rm split*
 	rm result.txt
+	rm log*
 	killall -9 ep2

@@ -1,6 +1,9 @@
 #include "immortal.h"
 
 #define JOBS 2
+#define LOGFILE "logIM.txt"
+
+FILE *log_im;
 
 void
 immortal( int file_number, char **out_files) {
@@ -89,6 +92,8 @@ immortal( int file_number, char **out_files) {
     args->end_p = &end_p;
 
     pthread_create( thread, NULL, heartbeat, args);
+
+    log_im = fopen( LOGFILE, "w");
 
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
@@ -185,6 +190,10 @@ immortal( int file_number, char **out_files) {
             if (work_done == file_number) {
                 work_left = false;
             }
+            if (DEBUG) {
+                log_datetime( log_im);
+                fprintf( log_im, "Recebi o trabalho %d de um worker\n", work_number);
+            }
             pthread_mutex_unlock( work_lists_mutex);
         }
         //New machine
@@ -195,6 +204,10 @@ immortal( int file_number, char **out_files) {
             pthread_mutex_lock( alive_list_mutex);
             insere_llip( buffer, alive_list);
             pthread_mutex_unlock( alive_list_mutex);
+            if (DEBUG) {
+                log_datetime( log_im);
+                fprintf( log_im, "Nova maquina (%s) entrou no sistema\n", buffer);
+            }
         }
         //Election request
         else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {
@@ -228,6 +241,10 @@ immortal( int file_number, char **out_files) {
                         fclose( fd);
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
+                        if (DEBUG) {
+                            log_datetime( log_im);
+                            fprintf( log_im, "Enviei o trabalho %d para o lider\n", work_left_list->prox->workn);
+                        }
                         if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                             insere_lln( work_left_list->prox->workn, current_work_list);
                             busca_e_remove_lln( work_left_list->prox->workn, work_left_list);
@@ -244,10 +261,8 @@ immortal( int file_number, char **out_files) {
         printf("[IM] Fechei a conexao mais recente. Continuarei: %d\n", work_left);
         close( connfd);
     }
+
     //SEPUKKU ALL THE THINGS
-
-
-
     printf("[IM] Preparando-se para acabar\n");
     close( listenfd);
 
@@ -255,6 +270,11 @@ immortal( int file_number, char **out_files) {
 
     while (end_p != 2){
         msleep(500);
+    }
+
+    if (DEBUG) {
+        log_datetime( log_im);
+        fprintf( log_im, "Fim da computacao. Resultado sera gerado\n");
     }
 
     free( work_left_list);
@@ -268,6 +288,8 @@ immortal( int file_number, char **out_files) {
     free( leader_ip_mutex);
     free( work_lists_mutex);
     free( args);
+
+    fclose(log_im);
 
     return;
 }
@@ -322,6 +344,10 @@ heartbeat( void *args) {
                 }
                 else {
                     fprintf( stderr, "IM-ERROR: Failed to connect to worker, removing from list. %s\n", strerror( errno));
+                    if (DEBUG) {
+                        log_datetime( log_im);
+                        fprintf( log_im, "Trabalhador %s saiu\n", p->ip);
+                    }
                     busca_e_remove_llip( p->ip, arg->alive_list);
                     /* Possivel que o trabalhador morra sem mandar seu
                     trabalho. Logo, fazemos por seguranca */
@@ -450,6 +476,11 @@ heartbeat( void *args) {
             free (q);
             pthread_mutex_unlock( arg->work_lists_mutex);
 
+            if (DEBUG) {
+                log_datetime( log_im);
+                fprintf( log_im, "Inicio de uma nova eleicao\n");
+            }
+
             for (p = arg->alive_list->prox; p != NULL; p = p->prox) {
                 if (i == new_leader)
                     break;
@@ -486,6 +517,10 @@ heartbeat( void *args) {
                     }
                 }
                 close( sockfd_wk);
+                if (DEBUG) {
+                    log_datetime( log_im);
+                    fprintf( log_im, "Novo lider (%s) eleito\n", arg->leader_ip);
+                }
             }
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
