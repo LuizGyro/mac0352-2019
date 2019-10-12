@@ -105,6 +105,7 @@ leader() {
     args->alive_list_mutex = alive_list_mutex;
     args->work_list = work_list;
     args->work_list_mutex = work_list_mutex;
+    args->is_leader = &is_leader;
 
     pthread_create( thread, NULL, communist_leader, args);
     while (is_leader) {
@@ -251,15 +252,16 @@ communist_leader( void *args) {
                 exit( EXIT_FAILURE);
             }
 
-            if (false) {
-            //if (nextLeader()) {
+            if (nextLeader()) {
                 // Request new leader election
+                printf("[LD] I REQUEST A NEW LEADER. NOOOOOOOOOOOOOOOW!\n\n\n\n\n");
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
                     fprintf( stderr, "LD-Failed to connect to immortal.\n");
                 }
                 write( sockfd_im, "105\r\n", 5 * sizeof( char));
-                alive = false;
                 close( sockfd_im);
+                alive = false;
+                *(arg->is_leader) = false;
             }
             else {
                 // Remain as leader, request new workload
@@ -325,12 +327,18 @@ communist_leader( void *args) {
         pthread_mutex_unlock( arg->work_list_mutex);
     }
 
+    pthread_exit(NULL);
     return NULL;
 }
 
 bool
 nextLeader() {
-    if (rand() % 2)
+    srand(time(NULL));
+    int i = rand();
+    i = i % 10;
+    printf("A NOVA ONDA DO IMPERADOR, TALVEZ %d\n\n\n\n\n\n", i);
+    if (i < 2) {
         return true;
+    }
     return false;
 }

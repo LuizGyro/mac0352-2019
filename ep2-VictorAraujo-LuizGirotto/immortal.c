@@ -157,7 +157,8 @@ immortal( int file_number, char **out_files) {
         }
         //Election request
         else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {
-            printf("[IM] Fazendo eleicao requerida\n");
+            printf("[IM] Eleicao requerida. Thread ira fazer.\n");
+
         }
         //Jobs request
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {

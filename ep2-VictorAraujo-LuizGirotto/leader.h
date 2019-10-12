@@ -14,6 +14,7 @@ typedef struct _leader_args {
     celula_n *work_list;
     pthread_mutex_t *work_list_mutex;
     pthread_mutex_t *alive_list_mutex;
+    bool *is_leader;
 
 } leader_args;
 
