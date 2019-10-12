@@ -219,15 +219,16 @@ communist_leader( void *args) {
                         if (!strncmp( buffer1, "200\r\n", 5 * sizeof( char))) {
                             printf("[LD] Enviando trabalho %d\n", arg->work_list->prox->workn);
                             makeFileNameIn( arg->work_list->prox->workn, buffer1, "LD");
-                            //sendFile( buffer1, sockfd_wk);
 
                             FILE *fd;
                             char big_buffer[1000];
                             fd = fopen( buffer1, "r");
                             while (fgets( big_buffer, 1000, fd) != NULL) {
+                                printf("[LD] vou mandar pro WK %s", big_buffer);
                                 write( sockfd_wk, big_buffer, 1000 * sizeof( char));
                                 n = read( sockfd_wk, buffer1, MAXLINE);
                                 buffer1[n] = 0;
+                                printf("[LD] recebi do WK %s", buffer1);
                             }
                             write( sockfd_wk, "EOF\r\n", 5 * sizeof( char));
                             fclose( fd);

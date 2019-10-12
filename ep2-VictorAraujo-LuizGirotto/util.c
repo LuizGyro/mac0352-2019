@@ -30,27 +30,27 @@ getIP ( char *ip, int ipsize) {
     struct ifreq ifr[50];
     int i = 0;
 
-    s = socket(AF_INET, SOCK_STREAM, 0);
+    s = socket( AF_INET, SOCK_STREAM, 0);
     if (s < 0) {
-        perror("socket");
+        perror( "getIP-socket");
         return 0;
     }
 
     ifconf.ifc_buf = (char *) ifr;
     ifconf.ifc_len = sizeof ifr;
 
-    if (ioctl(s, SIOCGIFCONF, &ifconf) == -1) {
+    if (ioctl( s, SIOCGIFCONF, &ifconf) == -1) {
       perror("ioctl");
       return 0;
     }
 
     /* Might be a stretch */
-    while (strncmp(ifr[i].ifr_name, "wl", 2)){
+    while (strncmp( ifr[i].ifr_name, "wl", 2)) {
         i++;
     }
     struct sockaddr_in *s_in = (struct sockaddr_in *) &ifr[i].ifr_addr;
 
-    if (!inet_ntop(AF_INET, &s_in->sin_addr, ip, ipsize)) {
+    if (!inet_ntop( AF_INET, &s_in->sin_addr, ip, ipsize)) {
         perror("inet_ntop");
         return 0;
     }

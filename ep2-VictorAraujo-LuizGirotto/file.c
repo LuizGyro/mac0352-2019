@@ -40,8 +40,8 @@ fkmerge( char *out_name, char **files, int n) {
 
 static int
 cmpll( const void *addr_1, const void *addr_2) {
-    long long int x1 = * (long long int *) addr_1;
-    long long int x2 = * (long long int *) addr_2;
+    long long int x1 = *(long long int *) addr_1;
+    long long int x2 = *(long long int *) addr_2;
 
     if (x1 < x2) return -1;
     else if (x1 == x2) return 0;
@@ -170,59 +170,3 @@ makeFileNameOut(int wk_number, char *out, char *who) {
     strncat( out, ".txt", 1000 * sizeof( char));
     return;
 }
-
-void
-sendFile( char *out, int sockfd) {
-    FILE *fd;
-    char big_buffer[1000];
-    fd = fopen( out, "r");
-
-    printf("[SENDFILE] Entrei!\n");
-    while (fgets( big_buffer, 1000, fd) != NULL) {
-        printf("[SENDFILE] Mandando: %s\n", big_buffer);
-        write( sockfd, big_buffer, 1000 * sizeof( char));
-    }
-    fclose( fd);
-}
-
-/* void orderAllFiles( int n, char **bob) {
-    int i = 0;
-    char *name_in = malloc( 200 * sizeof( char));
-    char *name_out = malloc( 200 * sizeof( char));
-    char *number = malloc( 200 * sizeof( char));
-    while ( i < n) {
-        strncpy( name_in, "splitIn", 200 * sizeof( char));
-        snprintf( number, 200 * sizeof( char), "%d", i);
-        strncat( name_in, number, 200 * sizeof( char));
-        strncat( name_in, ".txt", 200 * sizeof( char));
-
-        strncpy( name_out, "splitOut", 200 * sizeof( char));
-        snprintf( number, 200 * sizeof( char), "%d", i);
-        strncat( name_out, number, 200 * sizeof( char));
-        strncat( name_out, ".txt", 200 * sizeof( char));
-        strncpy( bob[i] ,name_out, 200 * sizeof( char));
-        orderFile( name_in, name_out);
-        i++;
-    }
-    return;
-} */
-
-/* int
-main( int argc, char **argv) {
-    int n;
-    if (argc < 1) {
-        fprintf( stderr, "Not enough arguments\n\n");
-        return EXIT_FAILURE;
-    }
-    n = splitFiles( argv[1]);
-    char **bob = malloc( (n + 1) * sizeof(char *));
-    for (int i = 0; i < n + 1; i++)
-        bob[i] = malloc( 200 * sizeof( char));
-    orderAllFiles( n + 1, bob);
-    fkmerge("result.txt", bob, n + 1);
-
-    for (int i = 0; i < n + 1; i++)
-        free(bob[i]);
-    free(bob);
-    return 0;
-} */
