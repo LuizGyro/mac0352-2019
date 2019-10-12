@@ -27,6 +27,4 @@ void makeFileNameIn(int wk_number, char *in, char *who);
 
 void makeFileNameOut(int work_number, char *out, char *who);
 
-void sendFile( char *out, int sockfd);
-
 #endif
