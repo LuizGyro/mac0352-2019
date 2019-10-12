@@ -147,6 +147,7 @@ leader() {
     pthread_mutex_destroy( alive_list_mutex);
     free( alive_list_mutex);
     close( listenfd_ld);
+    free( args);
     exit( EXIT_SUCCESS);
 }
 

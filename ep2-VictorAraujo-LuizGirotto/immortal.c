@@ -267,6 +267,7 @@ immortal( int file_number, char **out_files) {
     free( alive_list_mutex);
     free( leader_ip_mutex);
     free( work_lists_mutex);
+    free( args);
 
     return;
 }

@@ -47,11 +47,14 @@ worker() {
     pthread_t *thread = malloc ( sizeof( pthread_t));
     if (thread == NULL) {
         fprintf( stderr, "WK-ERROR: Could not allocate memory\n");
+        free( work_done_mutex);
         exit( EXIT_FAILURE);
     }
 
     if (pthread_mutex_init( work_done_mutex, NULL)) {
         fprintf( stderr, "WK-ERROR: Could not initialize mutex\n");
+        free( work_done_mutex);
+        free( thread);
         exit( EXIT_FAILURE);
     }
 
@@ -184,6 +187,9 @@ worker() {
     }
     close( listenfd);
     pthread_mutex_destroy( work_done_mutex);
+    free( work_done_mutex);
+    free( thread);
+    free( arg);
     exit( EXIT_SUCCESS);
 }
 
