@@ -1,6 +1,6 @@
 #include "immortal.h"
 
-#define JURBS 2
+#define JOBS 2
 
 void
 immortal( int file_number, char **out_files) {
@@ -22,6 +22,7 @@ immortal( int file_number, char **out_files) {
     bool work_left = true;
 
     int work_done = 0;
+    int end_p = 0;
 
     char out[MAXLINE + 1];
     char buffer[MAXLINE + 1];
@@ -43,7 +44,8 @@ immortal( int file_number, char **out_files) {
         free( alive_list);
         pthread_mutex_destroy( alive_list_mutex);
         free( alive_list_mutex);
-        printf("Imma die, mutex\n");
+        free( leader_ip_mutex);
+        free( work_lists_mutex);
         exit( EXIT_FAILURE);
     }
 
@@ -54,8 +56,10 @@ immortal( int file_number, char **out_files) {
         free( current_work_list);
         free( alive_list);
         pthread_mutex_destroy( alive_list_mutex);
+        pthread_mutex_destroy( leader_ip_mutex);
         free( alive_list_mutex);
-        printf("Imma die, mutex\n");
+        free( leader_ip_mutex);
+        free( work_lists_mutex);
         exit( EXIT_FAILURE);
     }
 
@@ -66,8 +70,11 @@ immortal( int file_number, char **out_files) {
         free( current_work_list);
         free( alive_list);
         pthread_mutex_destroy( alive_list_mutex);
+        pthread_mutex_destroy( leader_ip_mutex);
+        pthread_mutex_destroy( work_lists_mutex);
         free( alive_list_mutex);
-        printf("Imma die, mutex\n");
+        free( leader_ip_mutex);
+        free( work_lists_mutex);
         exit( EXIT_FAILURE);
     }
 
@@ -79,11 +86,23 @@ immortal( int file_number, char **out_files) {
     args->leader_ip_mutex = leader_ip_mutex;
     args->work_lists_mutex = work_lists_mutex;
     args->leader_ip = leader_ip;
+    args->end_p = &end_p;
 
     pthread_create( thread, NULL, heartbeat, args);
 
     if ((listenfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
+        free( work_left_list);
+        free( work_done_list);
+        free( current_work_list);
+        free( alive_list);
+        pthread_mutex_destroy( alive_list_mutex);
+        pthread_mutex_destroy( leader_ip_mutex);
+        pthread_mutex_destroy( work_lists_mutex);
+        free( alive_list_mutex);
+        free( leader_ip_mutex);
+        free( work_lists_mutex);
+        pthread_cancel( *thread);
         exit( EXIT_FAILURE);
     }
 
@@ -94,11 +113,33 @@ immortal( int file_number, char **out_files) {
 
     if (bind( listenfd, (struct sockaddr *) &servaddr, sizeof( servaddr)) == -1) {
         fprintf( stderr, "IM-ERROR: Could not bind socket, %s\n", strerror( errno));
+        free( work_left_list);
+        free( work_done_list);
+        free( current_work_list);
+        free( alive_list);
+        pthread_mutex_destroy( alive_list_mutex);
+        pthread_mutex_destroy( leader_ip_mutex);
+        pthread_mutex_destroy( work_lists_mutex);
+        free( alive_list_mutex);
+        free( leader_ip_mutex);
+        free( work_lists_mutex);
+        pthread_cancel( *thread);
         exit( EXIT_FAILURE);
     }
 
     if (listen( listenfd, LISTENQ) == -1) {
         fprintf( stderr, "IM-ERROR: Could not listen on port, %s\n", strerror( errno));
+        free( work_left_list);
+        free( work_done_list);
+        free( current_work_list);
+        free( alive_list);
+        pthread_mutex_destroy( alive_list_mutex);
+        pthread_mutex_destroy( leader_ip_mutex);
+        pthread_mutex_destroy( work_lists_mutex);
+        free( alive_list_mutex);
+        free( leader_ip_mutex);
+        free( work_lists_mutex);
+        pthread_cancel( *thread);
         exit( EXIT_FAILURE);
     }
 
@@ -158,12 +199,11 @@ immortal( int file_number, char **out_files) {
         //Election request
         else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {
             printf("[IM] Eleicao requerida. Thread ira fazer.\n");
-
         }
         //Jobs request
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
             pthread_mutex_lock( work_lists_mutex);
-            for (int i = 0; i < JURBS && work_left_list->prox != NULL; i++) {
+            for (int i = 0; i < JOBS && work_left_list->prox != NULL; i++) {
                 printf("[IM] Enviando trabalho numero %d para lider\n", work_left_list->prox->workn);
                 write( connfd, "005\r\n", 5 * sizeof( char));
                 n = read( connfd, buffer, MAXLINE);
@@ -189,37 +229,45 @@ immortal( int file_number, char **out_files) {
                         n = read( connfd, buffer, MAXLINE);
                         buffer[n] = 0;
                         if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
-                            printf("AQUI!!!!!!!!!!!! Inserindo %d na current_work_list\n", work_left_list->prox->workn);
                             insere_lln( work_left_list->prox->workn, current_work_list);
                             busca_e_remove_lln( work_left_list->prox->workn, work_left_list);
                         }
                     }
                 }
             }
+            /* Deveria estar aqui? */
             sleep(2);
-            /*
-            //WILL GO BOOM
-            if (work_left_list->prox == NULL) {
-                celula_n *p = work_left_list;
-                work_left_list = current_work_list;
-                current_work_list = p;
-            }
-            */
             write( connfd, "006\r\n", 5 * sizeof( char));
             printf("[IM] Nao enviarei mais trabalhos para o lider.\n");
             pthread_mutex_unlock( work_lists_mutex);
         }
-        printf("[IM] Fechei a ultima conexao. Continuarei: %d\n", work_left);
+        printf("[IM] Fechei a conexao mais recente. Continuarei: %d\n", work_left);
         close( connfd);
     }
     //SEPUKKU ALL THE THINGS
+
+
+
     printf("[IM] Preparando-se para acabar\n");
     close( listenfd);
-    pthread_mutex_destroy( alive_list_mutex);
+
+    end_p = 1;
+
+    while (end_p != 2){
+        msleep(500);
+    }
+
     free( work_left_list);
     free( work_done_list);
     free( current_work_list);
     free( alive_list);
+    pthread_mutex_destroy( alive_list_mutex);
+    pthread_mutex_destroy( leader_ip_mutex);
+    pthread_mutex_destroy( work_lists_mutex);
+    free( alive_list_mutex);
+    free( leader_ip_mutex);
+    free( work_lists_mutex);
+
     return;
 }
 
@@ -295,11 +343,21 @@ heartbeat( void *args) {
                 }
             }
             if (retries < 3) {
-                write( sockfd_wk, "003\r\n", 5 * sizeof( char));
-                int n = read( sockfd_wk, buffer, MAXLINE);
-                buffer[n] = 0;
-                if (!strncmp( buffer, "203\r\n", 5 * sizeof( char))) {
-                    num_alive++;
+                if ( *(arg->end_p) == 0) {
+                    write( sockfd_wk, "003\r\n", 5 * sizeof( char));
+                    int n = read( sockfd_wk, buffer, MAXLINE);
+                    buffer[n] = 0;
+                    if (!strncmp( buffer, "203\r\n", 5 * sizeof( char))) {
+                        num_alive++;
+                    }
+                }
+                else if ( *(arg->end_p) == 1) {
+                    write( sockfd_wk, "002\r\n", 5 * sizeof( char));
+                    int n = read( sockfd_wk, buffer, MAXLINE);
+                    buffer[n] = 0;
+                    if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
+                        num_alive++;
+                    }
                 }
             }
             close( sockfd_wk);
@@ -341,15 +399,28 @@ heartbeat( void *args) {
                 }
             }
             if (!requires_election) {
-                /* Sending heartbeat is not required, but we should close socket here */
-                write( sockfd_leader, "003\r\n", 5 * sizeof( char));
-                int n = read( sockfd_leader, buffer, MAXLINE);
-                buffer[n] = 0;
-                printf("[IM] lider me falou: %s", buffer);
-                close( sockfd_leader);
-                if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
-                    fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
-                    exit( EXIT_FAILURE);
+                if ( *(arg->end_p) == 0) {
+                    /* Sending heartbeat is not required, but we should close socket here */
+                    write( sockfd_leader, "003\r\n", 5 * sizeof( char));
+                    int n = read( sockfd_leader, buffer, MAXLINE);
+                    buffer[n] = 0;
+                    printf("[IM] lider me falou: %s", buffer);
+                    close( sockfd_leader);
+                    if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
+                        fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
+                        exit( EXIT_FAILURE);
+                    }
+                }
+                else if ( *(arg->end_p) == 1) {
+                    write( sockfd_leader, "002\r\n", 5 * sizeof( char));
+                    int n = read( sockfd_leader, buffer, MAXLINE);
+                    buffer[n] = 0;
+                    printf("[IM] lider me falou: %s", buffer);
+                    if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
+                        msleep(500);
+                    }
+                    close( sockfd_leader);
+                    break;
                 }
             }
         }
@@ -438,5 +509,8 @@ heartbeat( void *args) {
         close( sockfd_leader);
         pthread_mutex_unlock( arg->leader_ip_mutex);
     }
+
+    *(arg->end_p) = 2;
+    pthread_exit(NULL);
     return NULL;
 }

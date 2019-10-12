@@ -167,6 +167,11 @@ worker() {
             }
             pthread_mutex_unlock( work_done_mutex);
         }
+        else if (!strncmp( recvline, "002\r\n", 5 * sizeof( char))) {
+            write( connfd, "200\r\n", 5 * sizeof( char));
+            sleep(1);
+            work_left = false;
+        }
         else if (!strncmp( recvline, "003\r\n", 5 * sizeof( char))) {
             write( connfd, "203\r\n", 5 * sizeof( char));
         }

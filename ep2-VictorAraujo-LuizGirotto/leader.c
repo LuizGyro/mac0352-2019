@@ -118,6 +118,8 @@ leader() {
         printf("[LD] recebeu: %s", recvline);
 
         if (!strncmp( recvline, "002\r\n", 5 * sizeof( char))) {
+            write( connfd_ld, "100\r\n", 5 * sizeof( char));
+            sleep(1);
             is_leader = false;
         }
         /* Not permanent!! Leader does not respond to heartbeat */
