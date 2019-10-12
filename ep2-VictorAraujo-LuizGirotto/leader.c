@@ -25,7 +25,6 @@ FILE *log_ld;
 
 int
 leader() {
-    printf("[LD] Lider criado\n");
     char buffer[MAXLINE];
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
@@ -126,7 +125,6 @@ leader() {
         }
         n = read( connfd_ld, recvline, MAXLINE);
         recvline[n] = 0;
-        printf("[LD] recebeu: %s", recvline);
 
         if (!strncmp( recvline, "002\r\n", 5 * sizeof( char))) {
             write( connfd_ld, "100\r\n", 5 * sizeof( char));
@@ -226,7 +224,6 @@ communist_leader( void *args) {
                 /* Fazer timeout deste socket ser mais curto do que o normal */
                 if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
                     fprintf( stderr, "LD-Failed to connect to worker. %s\n", strerror( errno));
-                    printf("IP de tentativa falha de conexao: %s\n", p->ip);
                 }
 
                 else {
@@ -239,14 +236,12 @@ communist_leader( void *args) {
                         n = read( sockfd_wk, buffer1, MAXLINE);
                         buffer1[n] = 0;
                         if (!strncmp( buffer1, "200\r\n", 5 * sizeof( char))) {
-                            printf("[LD] Enviando trabalho %d\n", arg->work_list->prox->workn);
                             makeFileNameIn( arg->work_list->prox->workn, buffer1, "LD");
 
                             FILE *fd;
                             char big_buffer[1000];
                             fd = fopen( buffer1, "r");
                             while (fgets( big_buffer, 1000, fd) != NULL) {
-                                printf("[LD] vou mandar pro WK %s", big_buffer);
                                 write( sockfd_wk, big_buffer, 1000 * sizeof( char));
                                 n = read( sockfd_wk, buffer1, MAXLINE);
                                 buffer1[n] = 0;
@@ -280,7 +275,6 @@ communist_leader( void *args) {
 
             if (nextLeader()) {
                 // Request new leader election
-                printf("[LD] I REQUEST A NEW LEADER. NOOOOOOOOOOOOOOOW!\n\n\n\n\n");
                 if (connect( sockfd_im, (struct sockaddr *) &servaddr_im, sizeof( servaddr_im)) < 0) {
                     fprintf( stderr, "LD-Failed to connect to immortal.\n");
                 }
@@ -299,10 +293,8 @@ communist_leader( void *args) {
                     continue;
                 }
                 ssize_t n;
-                printf("[LD] Pedindo novos trabalhos para o imortal\n");
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 if((n = read( sockfd_im, buffer2, MAXLINE)) < 0) {
-                    printf("[LD] Pedido de trabalho sem tamanho.\n");
                     continue;
                 }
                 buffer2[n] = 0;
@@ -326,7 +318,6 @@ communist_leader( void *args) {
                         write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     }
                     fclose( fd);
-                    printf("[LD] Recebi o trabalho %d!\n", work_number);
                     if (DEBUG) {
                         log_datetime( log_ld);
                         fprintf( log_ld, "Recebi o trabalho %d do immortal\n", work_number);
@@ -335,7 +326,6 @@ communist_leader( void *args) {
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     read( sockfd_im, buffer2, MAXLINE);
                 }
-                printf("[LD] Terminei de receber trabalhos\n");
                 close( sockfd_im);
             }
         }
@@ -351,7 +341,6 @@ nextLeader() {
     srand(time(NULL));
     int i = rand();
     i = i % 10;
-    printf("A NOVA ONDA DO IMPERADOR, TALVEZ %d\n\n\n\n\n\n", i);
     if (i < 2) {
         return true;
     }

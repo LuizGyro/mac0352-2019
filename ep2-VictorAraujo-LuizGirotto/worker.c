@@ -134,7 +134,6 @@ worker() {
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
         pthread_mutex_lock( work_done_mutex);
-        printf("[WK] recebeu: %s. Sem trabalhar: %d\n", recvline, work_done);
         pthread_mutex_unlock( work_done_mutex);
         if (!strncmp( recvline, "001\r\n", 5 * sizeof( char))) {
             if ((leader_pid = fork()) == 0) {
@@ -164,7 +163,6 @@ worker() {
                         break;
                     }
                     fprintf( fd, "%s", buffer);
-                    printf("[WK] recebi algo do LD %s", buffer);
                     write(connfd, "200\r\n", 5 * sizeof( char));
                     msleep(200);
                 }
@@ -194,7 +192,10 @@ worker() {
         else if (!strncmp( recvline, "007\r\n", 5 * sizeof( char))) {
             write( connfd, "200\r\n", 5 * sizeof( char));
             read( connfd, buffer, MAXLINE);
-            printf("Meu novo lider é: %s", buffer);
+            if (DEBUG) {
+                log_datetime( log_wk);
+                fprintf( log_wk, "Eleito novo lider (%s)\n", buffer);
+            }
         }
         close( connfd);
     }
@@ -224,7 +225,6 @@ work(void *args) {
 
     makeFileNameIn( arg->work_number, in, "WK");
     makeFileNameOut( arg->work_number, out, "WK");
-    printf("[WK] sou uma thread e vou ordenar %d\n\n", arg->work_number);
     orderFile( in, out);
 
     /*Mandar pro imortal o trabalho*/
@@ -262,21 +262,17 @@ work(void *args) {
             FILE *fdt;
             char big_buffer[1000];
             fdt = fopen( out, "r");
-            printf("[WK] ABRI O ARQUIVO %s PRA MANDAR PRO IM\n", out);
             while (fgets( big_buffer, 1000, fdt) != NULL) {
-                printf("[WK] vou mandar pro IM %s", big_buffer);
                 write( sockfd, big_buffer, 1000 * sizeof( char));
                 n = read( sockfd, out, MAXLINE);
                 buffer[n] = 0;
                 msleep(200);
-                printf("[WK] Mandei %s e recebi %s", big_buffer, buffer);
             }
             write( sockfd, "EOF\r\n", 5 * sizeof( char));
-            printf("[WK] mandei meu EOF\n");
             n = read( sockfd, recvline, MAXLINE);
             recvline[n] = 0;
             if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
-                printf("[WK] Trabalho entregue com sucesso! %d\n", arg->work_number);
+                true;
             }
             fclose( fdt);
         }

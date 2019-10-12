@@ -159,7 +159,6 @@ immortal( int file_number, char **out_files) {
         }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
-        printf("[IM] Recebi: %s", recvline);
 
         // Recebe trabalho de um worker
         if (!strncmp( recvline, "212\r\n", 5 * sizeof( char))) {
@@ -176,7 +175,6 @@ immortal( int file_number, char **out_files) {
                     break;
                 }
                 fprintf( fd, "%s", buffer);
-                printf("[IM] recebi algo do WK %s", buffer);
                 write(connfd, "200\r\n", 5 * sizeof( char));
                 msleep(200);
             }
@@ -211,13 +209,11 @@ immortal( int file_number, char **out_files) {
         }
         //Election request
         else if (!strncmp( recvline, "105\r\n", 5 * sizeof( char))) {
-            printf("[IM] Eleicao requerida. Thread ira fazer.\n");
         }
         //Jobs request
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
             pthread_mutex_lock( work_lists_mutex);
             for (int i = 0; i < JOBS && work_left_list->prox != NULL; i++) {
-                printf("[IM] Enviando trabalho numero %d para lider\n", work_left_list->prox->workn);
                 write( connfd, "005\r\n", 5 * sizeof( char));
                 n = read( connfd, buffer, MAXLINE);
                 buffer[n] = 0;
@@ -255,15 +251,12 @@ immortal( int file_number, char **out_files) {
             /* Deveria estar aqui? */
             sleep(2);
             write( connfd, "006\r\n", 5 * sizeof( char));
-            printf("[IM] Nao enviarei mais trabalhos para o lider.\n");
             pthread_mutex_unlock( work_lists_mutex);
         }
-        printf("[IM] Fechei a conexao mais recente. Continuarei: %d\n", work_left);
         close( connfd);
     }
 
     //SEPUKKU ALL THE THINGS
-    printf("[IM] Preparando-se para acabar\n");
     close( listenfd);
 
     end_p = 1;
@@ -352,15 +345,12 @@ heartbeat( void *args) {
                     /* Possivel que o trabalhador morra sem mandar seu
                     trabalho. Logo, fazemos por seguranca */
                     pthread_mutex_lock( arg->work_lists_mutex);
-                    printf("[IM] Someone went boom, and we're not risking it\n");
                     celula_n *q, *k;
                     q = malloc (sizeof( celula_n));
                     for (k = arg->current_work_list->prox; k != NULL; k = k->prox) {
-                        printf("[IM] Present work number: %d\n", k->workn);
                         insere_lln(k->workn, q);
                     }
                     for (q = q->prox; q != NULL; q = q->prox) {
-                        printf("[IM] Rescued work number: %d\n", q->workn);
                         insere_lln( q->workn, arg->work_left_list);
                         busca_e_remove_lln( q->workn, arg->current_work_list);
                     }
@@ -431,7 +421,6 @@ heartbeat( void *args) {
                     write( sockfd_leader, "003\r\n", 5 * sizeof( char));
                     int n = read( sockfd_leader, buffer, MAXLINE);
                     buffer[n] = 0;
-                    printf("[IM] lider me falou: %s", buffer);
                     close( sockfd_leader);
                     if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
                         fprintf( stderr, "IM-ERROR: could not create socket, %s\n", strerror( errno));
@@ -442,7 +431,6 @@ heartbeat( void *args) {
                     write( sockfd_leader, "002\r\n", 5 * sizeof( char));
                     int n = read( sockfd_leader, buffer, MAXLINE);
                     buffer[n] = 0;
-                    printf("[IM] lider me falou: %s", buffer);
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                         msleep(500);
                     }
@@ -461,15 +449,12 @@ heartbeat( void *args) {
             /* Possivel que o lider antigo morreu sem mandar todos
             seus trabalhos. Logo, fazemos por seguranca */
             pthread_mutex_lock( arg->work_lists_mutex);
-            printf("[IM] Someone went boom, and we're not risking it\n");
             celula_n *q, *k;
             q = malloc (sizeof( celula_n));
             for (k = arg->current_work_list->prox; k != NULL; k = k->prox) {
-                printf("[IM] Present work number: %d\n", k->workn);
                 insere_lln(k->workn, q);
             }
             for (q = q->prox; q != NULL; q = q->prox) {
-                printf("[IM] Rescued work number: %d\n", q->workn);
                 insere_lln( q->workn, arg->work_left_list);
                 busca_e_remove_lln( q->workn, arg->current_work_list);
             }
@@ -487,7 +472,6 @@ heartbeat( void *args) {
                 i++;
             }
             strncpy( arg->leader_ip, p->ip, INET_ADDRSTRLEN);
-            printf("NOVO LIDE SUPREMO: %s\n", arg->leader_ip);
             // Avisa para todos quem eh o novo lider
             pthread_mutex_lock( arg->alive_list_mutex);
 
@@ -506,7 +490,6 @@ heartbeat( void *args) {
                 }
                 else {
                     if (strncmp(p->ip, arg->leader_ip, INET_ADDRSTRLEN) == 0) {
-                        printf("Imma pick you %s | %s\n", arg->leader_ip, p->ip);
                         write( sockfd_wk, "001\r\n", 5 * sizeof( char));
                     }
                     write( sockfd_wk, "007\r\n", 5 * sizeof( char));
@@ -524,9 +507,6 @@ heartbeat( void *args) {
             }
             pthread_mutex_unlock( arg->alive_list_mutex);
         }
-        else {
-            printf("[IM] No election required\n");
-        }
 
         if (connect( sockfd_leader, (struct sockaddr *) &servaddr_leader, sizeof( servaddr_leader)) == -1) {
             fprintf( stderr, "ERRO: Could not connect IM to LD: %s\n", strerror( errno));
@@ -536,7 +516,6 @@ heartbeat( void *args) {
             int n = read( sockfd_leader, buffer, MAXLINE);
             buffer[n] = 0;
             if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
-                printf("[IM] Sending alive list\n");
                 for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {
                     write( sockfd_leader, p->ip, INET_ADDRSTRLEN * sizeof( char));
                 }
