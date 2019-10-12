@@ -34,8 +34,11 @@
 typedef struct _im_thread_args {
     char *leader_ip;
     celula_ip *alive_list;
+    celula_n *work_left_list;
+    celula_n *current_work_list;
     pthread_mutex_t *alive_list_mutex;
     pthread_mutex_t *leader_ip_mutex;
+    pthread_mutex_t *work_lists_mutex;
 } im_thread_args;
 
 

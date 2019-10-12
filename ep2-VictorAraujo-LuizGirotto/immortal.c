@@ -15,7 +15,7 @@ immortal( int file_number, char **out_files) {
 
     pthread_mutex_t *alive_list_mutex = malloc( sizeof( pthread_mutex_t));
     pthread_mutex_t *leader_ip_mutex = malloc( sizeof( pthread_mutex_t));
-
+    pthread_mutex_t *work_lists_mutex = malloc( sizeof( pthread_mutex_t));
 
     celula_ip *alive_list = malloc( sizeof( celula_ip));
 
@@ -59,10 +59,25 @@ immortal( int file_number, char **out_files) {
         exit( EXIT_FAILURE);
     }
 
+    if (pthread_mutex_init( work_lists_mutex, NULL)) {
+        fprintf( stderr, "IM-ERROR: Could not initialize mutex\n");
+        free( work_left_list);
+        free( work_done_list);
+        free( current_work_list);
+        free( alive_list);
+        pthread_mutex_destroy( alive_list_mutex);
+        free( alive_list_mutex);
+        printf("Imma die, mutex\n");
+        exit( EXIT_FAILURE);
+    }
+
 
     args->alive_list = alive_list;
+    args->work_left_list = work_left_list;
+    args->current_work_list = current_work_list;
     args->alive_list_mutex = alive_list_mutex;
     args->leader_ip_mutex = leader_ip_mutex;
+    args->work_lists_mutex = work_lists_mutex;
     args->leader_ip = leader_ip;
 
     pthread_create( thread, NULL, heartbeat, args);
@@ -102,6 +117,7 @@ immortal( int file_number, char **out_files) {
 
         // Recebe trabalho de um worker
         if (!strncmp( recvline, "212\r\n", 5 * sizeof( char))) {
+            pthread_mutex_lock( work_lists_mutex);
             write( connfd, "000\r\n", 5 * sizeof( char));
             n = read( connfd, buffer, MAXLINE);
             buffer[n] = 0;
@@ -116,7 +132,7 @@ immortal( int file_number, char **out_files) {
                 fprintf( fd, "%s", buffer);
                 printf("[IM] recebi algo do WK %s", buffer);
                 write(connfd, "200\r\n", 5 * sizeof( char));
-                msleep(100);
+                msleep(200);
             }
             fclose( fd);
             write( connfd, "000\r\n", 5 * sizeof( char));
@@ -128,6 +144,7 @@ immortal( int file_number, char **out_files) {
             if (work_done == file_number) {
                 work_left = false;
             }
+            pthread_mutex_unlock( work_lists_mutex);
         }
         //New machine
         else if (!strncmp( recvline, "202\r\n", 5 * sizeof( char))) {
@@ -144,6 +161,7 @@ immortal( int file_number, char **out_files) {
         }
         //Jobs request
         else if (!strncmp( recvline, "106\r\n", 5 * sizeof( char))) {
+            pthread_mutex_lock( work_lists_mutex);
             for (int i = 0; i < JURBS && work_left_list->prox != NULL; i++) {
                 printf("[IM] Enviando trabalho numero %d para lider\n", work_left_list->prox->workn);
                 write( connfd, "005\r\n", 5 * sizeof( char));
@@ -187,6 +205,7 @@ immortal( int file_number, char **out_files) {
             */
             write( connfd, "006\r\n", 5 * sizeof( char));
             printf("[IM] Nao enviarei mais trabalhos para o lider.\n");
+            pthread_mutex_unlock( work_lists_mutex);
         }
         printf("[IM] Fechei a ultima conexao. Continuarei: %d\n", work_left);
         close( connfd);
@@ -253,6 +272,16 @@ heartbeat( void *args) {
                 else {
                     fprintf( stderr, "IM-ERROR: Failed to connect to worker, removing from list. %s\n", strerror( errno));
                     busca_e_remove_llip( p->ip, arg->alive_list);
+                    /* Possivel que o trabalhador morra sem mandar seu
+                    trabalho. Logo, fazemos por seguranca */
+                    pthread_mutex_lock( arg->work_lists_mutex);
+                    printf("[IM] Someone went boom, and we're not risking it\n");
+                    celula_n *q;
+                    for (q = arg->current_work_list->prox; q != NULL; q = q->prox) {
+                        insere_lln( q->workn, arg->work_left_list);
+                        busca_e_remove_lln( q->workn, arg->current_work_list);
+                    }
+                    pthread_mutex_unlock( arg->work_lists_mutex);
                     break;
                 }
             }
@@ -321,6 +350,18 @@ heartbeat( void *args) {
             int new_leader = rand() % num_alive;
             int i = 0;
             celula_ip *p;
+
+            /* Possivel que o lider antigo morreu sem mandar todos
+            seus trabalhos. Logo, fazemos por seguranca */
+            pthread_mutex_lock( arg->work_lists_mutex);
+            printf("[IM] Someone went boom, and we're not risking it\n");
+            celula_n *q;
+            for (q = arg->current_work_list->prox; q != NULL; q = q->prox) {
+                insere_lln( q->workn, arg->work_left_list);
+                busca_e_remove_lln( q->workn, arg->current_work_list);
+            }
+            pthread_mutex_unlock( arg->work_lists_mutex);
+
             for (p = arg->alive_list->prox; p != NULL; p = p->prox) {
                 if (i == new_leader)
                     break;
@@ -342,7 +383,7 @@ heartbeat( void *args) {
                 }
                 // Fazer timeout deste socket ser mais curto do que o normal
                 if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
-                    fprintf( stderr, "IM-ERROR: Failed to connect do worker, somehow. %s\n", strerror(errno));
+                    fprintf( stderr, "IM-ERROR: Failed to connect to worker, somehow. %s\n", strerror(errno));
                 }
                 else {
                     if (strncmp(p->ip, arg->leader_ip, INET_ADDRSTRLEN) == 0) {

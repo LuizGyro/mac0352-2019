@@ -228,7 +228,7 @@ communist_leader( void *args) {
                                 write( sockfd_wk, big_buffer, 1000 * sizeof( char));
                                 n = read( sockfd_wk, buffer1, MAXLINE);
                                 buffer1[n] = 0;
-                                msleep(100);
+                                msleep(200);
                             }
                             write( sockfd_wk, "EOF\r\n", 5 * sizeof( char));
                             fclose( fd);
