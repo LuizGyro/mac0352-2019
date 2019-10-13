@@ -1,6 +1,6 @@
 #include "immortal.h"
 
-#define JOBS 2
+#define JOBS 10
 #define LOGFILE "logIM.txt"
 
 FILE *log_im;

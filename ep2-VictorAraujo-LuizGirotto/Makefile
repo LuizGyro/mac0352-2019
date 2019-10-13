@@ -11,7 +11,7 @@ ep2: $(OBJ)
 clean:
 	rm -f ep2
 	rm -f *.o
-	rm -f split*
+	find . -name "split*" -delete
 	rm -f result.txt
 	rm -f log*
 	killall -9 ep2

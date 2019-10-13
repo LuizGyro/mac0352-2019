@@ -134,8 +134,6 @@ worker() {
         }
         n = read( connfd, recvline, MAXLINE);
         recvline[n] = 0;
-        pthread_mutex_lock( work_done_mutex);
-        pthread_mutex_unlock( work_done_mutex);
         if (!strncmp( recvline, "001\r\n", 5 * sizeof( char))) {
             if ((leader_pid = fork()) == 0) {
                 close( connfd);

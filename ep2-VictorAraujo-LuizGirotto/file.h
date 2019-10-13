@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX 5
+#define MAX 100
 
 int getMinInd ( long long int *arr, int n);
 

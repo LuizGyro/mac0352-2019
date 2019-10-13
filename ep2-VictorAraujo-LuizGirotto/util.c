@@ -44,8 +44,15 @@ char *getImmortalIP() {
     FILE *fd;
     char *ip = NULL;
     size_t n = 0;
+    ssize_t cn;
+
     fd = fopen( "ep02.conf", "r");
-    getline( &ip, &n, fd);
+    cn = getline( &ip, &n, fd);
+
+    if (ip[cn-1] == '\n') {
+        ip[cn-1] = '\0';
+    }
+
     fclose( fd);
     return ip;
 }
