@@ -27,8 +27,15 @@ int
 getIP ( char *ip, int ipsize) {
     FILE *fd;
     size_t n = ipsize * sizeof( char);
+    ssize_t cn;
+
     fd = fopen( "ep02wk.conf", "r");
-    getline( &ip, &n, fd);
+    cn = getline( &ip, &n, fd);
+
+    if (ip[cn-1] == '\n') {
+        ip[cn-1] = '\0';
+    }
+
     fclose( fd);
     return 1;
 }
