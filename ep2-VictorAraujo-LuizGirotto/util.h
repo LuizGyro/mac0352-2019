@@ -7,7 +7,7 @@
 #define LEADER_PORT 50000
 #define WORKER_PORT 60000
 
-#define DEBUG 1
+#define DEBUG 0
 
 
 /* Esta função devolve o endereço IP local da maquina na qual o
