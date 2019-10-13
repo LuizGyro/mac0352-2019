@@ -9,9 +9,9 @@ ep2: $(OBJ)
 	$(CC) $< $(FLAGS) -c
 
 clean:
-	rm ep2
-	rm *.o
-	rm split*
-	rm result.txt
-	rm log*
+	rm -f ep2
+	rm -f *.o
+	rm -f split*
+	rm -f result.txt
+	rm -f log*
 	killall -9 ep2

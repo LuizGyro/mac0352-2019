@@ -25,36 +25,11 @@
 
 int
 getIP ( char *ip, int ipsize) {
-    int s;
-    struct ifconf ifconf;
-    struct ifreq ifr[50];
-    int i = 0;
-
-    s = socket( AF_INET, SOCK_STREAM, 0);
-    if (s < 0) {
-        perror( "getIP-socket");
-        return 0;
-    }
-
-    ifconf.ifc_buf = (char *) ifr;
-    ifconf.ifc_len = sizeof ifr;
-
-    if (ioctl( s, SIOCGIFCONF, &ifconf) == -1) {
-      perror("ioctl");
-      return 0;
-    }
-
-    /* Might be a stretch */
-    while (strncmp( ifr[i].ifr_name, "wl", 2)) {
-        i++;
-    }
-    struct sockaddr_in *s_in = (struct sockaddr_in *) &ifr[i].ifr_addr;
-
-    if (!inet_ntop( AF_INET, &s_in->sin_addr, ip, ipsize)) {
-        perror("inet_ntop");
-        return 0;
-    }
-
+    FILE *fd;
+    size_t n = ipsize * sizeof( char);
+    fd = fopen( "ep02wk.conf", "r");
+    getline( &ip, &n, fd);
+    fclose( fd);
     return 1;
 }
 

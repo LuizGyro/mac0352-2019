@@ -18,6 +18,14 @@ Para compilar o EP, basta utilizar o comando "make".
 Se desejar limpar os arquivos intermediarios criados ao rodar o EP,
 basta utilizar o comando "make clean".
 
+Antes de executar o programa, é nescessário que exista um arquivo
+ep02.conf que contem o IP da maquina "Immortal" e um arquivo ep02wk.conf
+que contem o IP da maquina que sera usada no momento. Em ambos os 
+arquivos a primeira linha deve ser o IP desejado em um formato igual a
+"127.0.0.1", não deve haver mais nada nessa linha e qualquer outra linha
+não sera considerada. Note que mesmo a maquina "Immortal" precisa 
+desses dois arquivos.
+
 Para executar o EP, basta usar o comando "$ ./ep2 $1", onde $1 é o
 arquivo a ser ordenado. Se este argumento for especificado, o
 computador sera considerado o "primeiro computador" e, caso contrario,
