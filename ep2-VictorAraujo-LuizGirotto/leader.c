@@ -136,13 +136,14 @@ leader() {
             write( connfd_ld, "103\r\n", 5 * sizeof( char));
         }
         else if (!strncmp( recvline, "004\r\n", 5 * sizeof( char))) {
+            pthread_mutex_lock( alive_list_mutex);
             limpa_llip( alive_list);
             write( connfd_ld, "100\r\n", 5 * sizeof( char));
-            while ((read( connfd_ld, buffer, MAXLINE)) > 0) {
-                pthread_mutex_lock( alive_list_mutex);
+            while ((n = read( connfd_ld, buffer, MAXLINE)) > 0) {
+                buffer[n] =0;
                 insere_llip( buffer, alive_list);
-                pthread_mutex_unlock( alive_list_mutex);
             }
+            pthread_mutex_unlock( alive_list_mutex);
         }
         close( connfd_ld);
     }
@@ -171,13 +172,13 @@ leader() {
 void *
 communist_leader( void *args) {
     int sockfd_im;
-    char buffer1[MAXLINE];
-    char buffer2[MAXLINE];
+    char buffer1[MAXLINE + 1];
+    char buffer2[MAXLINE + 1];
     struct sockaddr_in servaddr_im;
     bool alive = true;
 
     int work_number;
-    //FILE *fd;
+    ssize_t n;
 
     leader_args *arg = (leader_args *) args;
 
@@ -222,14 +223,14 @@ communist_leader( void *args) {
                     exit( EXIT_FAILURE);
                 }
                 /* Fazer timeout deste socket ser mais curto do que o normal */
-                if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) < 0) {
+                if (connect( sockfd_wk, (struct sockaddr *) &servaddr_wk, sizeof( servaddr_wk)) == -1) {
                     fprintf( stderr, "LD-Failed to connect to worker. %s\n", strerror( errno));
                 }
 
                 else {
-                    ssize_t n;
                     write(sockfd_wk, "102\r\n", 5 * sizeof( char));
-                    read( sockfd_wk, buffer1, MAXLINE);
+                    n = read( sockfd_wk, buffer1, MAXLINE);
+                    buffer1[n] = 0;
                     if (!strncmp( buffer1, "200\r\n", 5 * sizeof( char))) {
                         snprintf( buffer1, MAXLINE, "%d", arg->work_list->prox->workn);
                         write( sockfd_wk, buffer1, strlen( buffer1) * sizeof( char));
@@ -245,7 +246,7 @@ communist_leader( void *args) {
                                 write( sockfd_wk, big_buffer, 1000 * sizeof( char));
                                 n = read( sockfd_wk, buffer1, MAXLINE);
                                 buffer1[n] = 0;
-                                msleep(200);
+                                //msleep( 500);
                             }
                             write( sockfd_wk, "EOF\r\n", 5 * sizeof( char));
                             fclose( fd);
@@ -295,6 +296,7 @@ communist_leader( void *args) {
                 ssize_t n;
                 write( sockfd_im, "106\r\n", 5 * sizeof( char));
                 if((n = read( sockfd_im, buffer2, MAXLINE)) < 0) {
+                    buffer2[n] = 0;
                     continue;
                 }
                 buffer2[n] = 0;
@@ -311,6 +313,7 @@ communist_leader( void *args) {
 
                     while (true) {
                         n = read( sockfd_im, buffer2, MAXLINE);
+                        buffer2[n] = 0;
                         if (!strncmp( buffer2, "EOF\r\n", 5 * sizeof( char))) {
                             break;
                         }
@@ -325,6 +328,7 @@ communist_leader( void *args) {
                     insere_lln( work_number, arg->work_list);
                     write( sockfd_im, "100\r\n", 5 * sizeof( char));
                     read( sockfd_im, buffer2, MAXLINE);
+                    buffer2[n] = 0;
                 }
                 close( sockfd_im);
             }

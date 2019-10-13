@@ -170,13 +170,14 @@ immortal( int file_number, char **out_files) {
             makeFileNameOut( work_number, out, "IM");
             FILE *fd = fopen( out, "w");
             write( connfd, "000\r\n", 5 * sizeof( char));
-            while ((read( connfd, buffer, MAXLINE)) > 0) {
+            while ((n = read( connfd, buffer, MAXLINE)) > 0) {
+                buffer[n] = 0;
                 if (!strncmp( buffer, "EOF\r\n", 5 * sizeof( char))) {
                     break;
                 }
                 fprintf( fd, "%s", buffer);
                 write(connfd, "200\r\n", 5 * sizeof( char));
-                msleep(200);
+                //msleep( 500);
             }
             fclose( fd);
             write( connfd, "000\r\n", 5 * sizeof( char));
@@ -248,8 +249,6 @@ immortal( int file_number, char **out_files) {
                     }
                 }
             }
-            /* Deveria estar aqui? */
-            sleep(2);
             write( connfd, "006\r\n", 5 * sizeof( char));
             pthread_mutex_unlock( work_lists_mutex);
         }
@@ -262,7 +261,7 @@ immortal( int file_number, char **out_files) {
     end_p = 1;
 
     while (end_p != 2){
-        msleep(500);
+        //msleep(500);
     }
 
     if (DEBUG) {
@@ -294,6 +293,7 @@ heartbeat( void *args) {
     char buffer[MAXLINE];
 
     int num_alive;
+    ssize_t n;
 
     int sockfd_wk;
     struct sockaddr_in servaddr_wk;
@@ -362,7 +362,7 @@ heartbeat( void *args) {
             if (retries < 3) {
                 if ( *(arg->end_p) == 0) {
                     write( sockfd_wk, "003\r\n", 5 * sizeof( char));
-                    int n = read( sockfd_wk, buffer, MAXLINE);
+                    n = read( sockfd_wk, buffer, MAXLINE);
                     buffer[n] = 0;
                     if (!strncmp( buffer, "203\r\n", 5 * sizeof( char))) {
                         num_alive++;
@@ -370,7 +370,7 @@ heartbeat( void *args) {
                 }
                 else if ( *(arg->end_p) == 1) {
                     write( sockfd_wk, "002\r\n", 5 * sizeof( char));
-                    int n = read( sockfd_wk, buffer, MAXLINE);
+                    n = read( sockfd_wk, buffer, MAXLINE);
                     buffer[n] = 0;
                     if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
                         num_alive++;
@@ -419,7 +419,7 @@ heartbeat( void *args) {
                 if ( *(arg->end_p) == 0) {
                     /* Sending heartbeat is not required, but we should close socket here */
                     write( sockfd_leader, "003\r\n", 5 * sizeof( char));
-                    int n = read( sockfd_leader, buffer, MAXLINE);
+                    n = read( sockfd_leader, buffer, MAXLINE);
                     buffer[n] = 0;
                     close( sockfd_leader);
                     if ((sockfd_leader = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -429,10 +429,10 @@ heartbeat( void *args) {
                 }
                 else if ( *(arg->end_p) == 1) {
                     write( sockfd_leader, "002\r\n", 5 * sizeof( char));
-                    int n = read( sockfd_leader, buffer, MAXLINE);
+                    n = read( sockfd_leader, buffer, MAXLINE);
                     buffer[n] = 0;
                     if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
-                        msleep(500);
+                        //msleep(500);
                     }
                     close( sockfd_leader);
                     break;
@@ -493,7 +493,7 @@ heartbeat( void *args) {
                         write( sockfd_wk, "001\r\n", 5 * sizeof( char));
                     }
                     write( sockfd_wk, "007\r\n", 5 * sizeof( char));
-                    int n = read( sockfd_wk, buffer, MAXLINE);
+                    n = read( sockfd_wk, buffer, MAXLINE);
                     buffer[n] = 0;
                     if (!strncmp( buffer, "200\r\n", 5 * sizeof( char))) {
                         write( sockfd_wk, arg->leader_ip, INET_ADDRSTRLEN * sizeof( char));
@@ -513,7 +513,7 @@ heartbeat( void *args) {
         }
         else {
             write( sockfd_leader, "004\r\n", 5 * sizeof( char));
-            int n = read( sockfd_leader, buffer, MAXLINE);
+            n = read( sockfd_leader, buffer, MAXLINE);
             buffer[n] = 0;
             if (!strncmp( buffer, "100\r\n", 5 * sizeof( char))) {
                 for (celula_ip *p = arg->alive_list->prox; p != NULL; p = p->prox) {

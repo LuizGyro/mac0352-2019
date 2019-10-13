@@ -64,7 +64,8 @@ worker() {
     arg->work_done = &work_done;
 
     /* Prepara socket pra comunicacao inicial com o imortal */
-    int sockfd, len;
+    int sockfd;
+    ssize_t len;
     char recvline[MAXLINE + 1];
     struct sockaddr_in servaddr, servaddr_im;
     if ((sockfd = socket( AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -146,9 +147,9 @@ worker() {
             pthread_mutex_lock( work_done_mutex);
             if (work_done) {
                 write( connfd, "200\r\n", 5 * sizeof( char));
-                read( connfd, buffer, MAXLINE);
-                arg->work_number = atoi(buffer);
-                write( connfd, "200\r\n", 5 * sizeof( char));
+                n = read( connfd, buffer, MAXLINE);
+                buffer[n] = 0;
+                arg->work_number = atoi( buffer);
 
                 makeFileNameIn( arg->work_number, buffer, "WK");
                 if ((fd = fopen( buffer, "w")) == NULL) {
@@ -158,13 +159,14 @@ worker() {
                     exit( EXIT_FAILURE);
                 }
                 write( connfd, "200\r\n", 5 * sizeof( char));
-                while ((read( connfd, buffer, MAXLINE)) > 0) {
+                while ((n = read( connfd, buffer, MAXLINE)) > 0) {
+                    buffer[n] = 0;
                     if (!strncmp( buffer, "EOF\r\n", 5 * sizeof( char))) {
                         break;
                     }
                     fprintf( fd, "%s", buffer);
                     write(connfd, "200\r\n", 5 * sizeof( char));
-                    msleep(200);
+                    //msleep( 500);
                 }
                 if (DEBUG) {
                     log_datetime( log_wk);
@@ -191,7 +193,8 @@ worker() {
         }
         else if (!strncmp( recvline, "007\r\n", 5 * sizeof( char))) {
             write( connfd, "200\r\n", 5 * sizeof( char));
-            read( connfd, buffer, MAXLINE);
+            n = read( connfd, buffer, MAXLINE);
+            buffer[n] = 0;
             if (DEBUG) {
                 log_datetime( log_wk);
                 fprintf( log_wk, "Eleito novo lider (%s)\n", buffer);
@@ -255,7 +258,7 @@ work(void *args) {
     recvline[n] = 0;
     if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
         snprintf( buffer, MAXLINE, "%d", arg->work_number);
-        write( sockfd, buffer, sizeof( buffer));
+        write( sockfd, buffer, strlen( buffer) * sizeof( char));
         n = read( sockfd, recvline, MAXLINE);
         recvline[n] = 0;
         if (!strncmp( recvline, "000\r\n", 5 * sizeof( char))) {
@@ -264,9 +267,9 @@ work(void *args) {
             fdt = fopen( out, "r");
             while (fgets( big_buffer, 1000, fdt) != NULL) {
                 write( sockfd, big_buffer, 1000 * sizeof( char));
-                n = read( sockfd, out, MAXLINE);
+                n = read( sockfd, buffer, MAXLINE);
                 buffer[n] = 0;
-                msleep(200);
+                //msleep( 500);
             }
             write( sockfd, "EOF\r\n", 5 * sizeof( char));
             n = read( sockfd, recvline, MAXLINE);
