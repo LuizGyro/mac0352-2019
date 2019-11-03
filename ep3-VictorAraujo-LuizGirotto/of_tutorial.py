@@ -96,28 +96,35 @@ class Tutorial (object):
     self.mac_to_port[packet.src] = packet_in.in_port
 
     dest_mac = packet.dst
-    match = of.ofp_match()
-    match.in_port = packet_in.in_port
 
     if self.mac_to_port.get(dest_mac) is not None:
       # Send packet out the associated port
-      self.resend_packet(packet_in, self.mac_to_port[dest_mac])
+      #self.resend_packet(packet_in, self.mac_to_port[dest_mac])
 
       # Once you have the above working, try pushing a flow entry
       # instead of resending the packet (comment out the above and
       # uncomment and complete the below.)
 
-      log.debug("Installing flow! Source port: " + packet_in.in_port + ", destination port: " + self.mac_to_port[dest_mac])
+      log.debug("Installing flow! Source port: " + str(packet_in.in_port) + ", destination port: " + str(self.mac_to_port[dest_mac]))
       # Maybe the log statement should have source/destination/port?
 
-      #msg = of.ofp_flow_mod()
+      msg = of.ofp_flow_mod()
+
+      # Set fields to match received packet
+      m = of.ofp_match()
+      m.in_port = packet_in.in_port
+      m.dl_src = packet.src
+      m.dl_dst = packet.dst
+      msg.match = m
+
+      # Set other fields of flow_mod (timeouts? buffer_id?)
+      # We decide on not setting any of those fields, for they are unecessary
       #
-      ## Set fields to match received packet
-      #msg.match = of.ofp_match.from_packet(packet)
-      #
-      #< Set other fields of flow_mod (timeouts? buffer_id?) >
-      #
-      #< Add an output action, and send -- similar to resend_packet() >
+      # Add an output action, and send -- similar to resend_packet()
+      action = of.ofp_action_output(port = self.mac_to_port[dest_mac])
+      msg.actions.append(action)
+
+      self.connection.send(msg)
 
     else:
       # Flood the packet out everything but the input port
