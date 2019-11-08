@@ -186,7 +186,7 @@ class Tutorial (object):
           log.debug('Difference found in source IP: ' + str(self.rules["ip_source"]) + ", " + str(m.nw_src))
           firewall_check = False
       if (self.rules["ip_dest"] is not None and self.rules["ip_dest"] != m.nw_dst):
-          log.debug('Difference found in source IP: ' + str(self.rules["ip_dest"]) + ", " + str(m.nw_dst))
+          log.debug('Difference found in destination IP: ' + str(self.rules["ip_dest"]) + ", " + str(m.nw_dst))
           firewall_check = False
 
 
