@@ -149,10 +149,13 @@ class Tutorial (object):
       # log.debug('packet.src: ' + str(packet.src))
       m.dl_dst = packet.dst
       # log.debug('packet.dst: ' + str(packet.dst))
+
+      # We need this L2 field not wildcarded to be able to
+      # match L3 fields nw_src, nw_dst and nw_proto
+      m.dl_type = packet.type
+      log.debug('packet.type: ' + str(packet.type))
       if packet.type == ethernet.IP_TYPE:
-          # We need this L2 field not wildcarded to be able to
-          # match L3 fields nw_src, nw_dst and nw_proto
-          m.dl_type = 0x0800
+
           ip_packet = packet.payload
           m.nw_src = ip_packet.srcip
           m.nw_dst = ip_packet.dstip
