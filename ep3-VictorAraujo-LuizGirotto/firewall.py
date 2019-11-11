@@ -142,19 +142,17 @@ class Tutorial (object):
           ip_packet = packet.payload
           m.nw_src = ip_packet.srcip
           m.nw_dst = ip_packet.dstip
-          if (packet.find('tcp') is not None):
-              m.nw_proto = 6
-          elif (packet.find('udp') is not None):
-              m.nw_proto = 17
           # log.debug('ip_packet.srcip: ' + str(ip_packet.srcip))
           # log.debug('ip_packet.dstip: ' + str(ip_packet.dstip))
           # log.debug('Printing mvars of ip_packet:')
           # print dir(ip_packet)
       if packet.find('tcp') is not None:
           tcp = packet.find('tcp')
+          m.nw_proto = 6
           m.tp_src = tcp.srcport
       elif packet.find('udp') is not None:
           udp = packet.find('udp')
+          m.nw_proto = 17
           m.tp_src = udp.srcport
 
       msg.match = m
