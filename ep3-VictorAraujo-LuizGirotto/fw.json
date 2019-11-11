@@ -1,6 +1,12 @@
 {
     "rule1" : {
+        "protocol": "TCP",
         "ip_source": "10.0.0.1",
+        "port": "5001",
         "ip_dest": "10.0.0.3"
+    },
+    "rule2" : {
+        "protocol": "UDP",
+        "port": "40000"
     }
 }
