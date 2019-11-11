@@ -21,6 +21,7 @@ learning switch.
 It's roughly similar to the one Brandon Heller did for NOX.
 """
 
+import json
 from pox.core import core
 import pox.openflow.libopenflow_01 as of
 import pox.lib.packet as pkt # POX convention
@@ -49,26 +50,8 @@ class Tutorial (object):
 
     fd = open("fw.conf", "r")
 
-    # Firewall rules
-    self.rules = {
-            "ip_source": None,
-            "ip_dest": None,
-            "port": None,
-            "protocol": None
-    }
-
-    for line in fd:
-        if (line.isspace()) :
-            continue
-        words = line.rsplit()
-        if (words[0] == "ip_source:") :
-            self.rules["ip_source"] = words[1]
-        elif (words[0] == "ip_dest:") :
-            self.rules["ip_dest"] = words[1]
-        elif (words[0] == "port:") :
-            self.rules["port"] = int(words[1])
-        elif (words[0] == "protocol:") :
-            self.rules["protocol"] = words[1]
+    with open("fw.json", 'r') as f:
+      self.rules = list((json.load(f)).values())
 
 
   def resend_packet (self, packet_in, out_port):
@@ -167,37 +150,50 @@ class Tutorial (object):
           # log.debug('ip_packet.dstip: ' + str(ip_packet.dstip))
           # log.debug('Printing mvars of ip_packet:')
           # print dir(ip_packet)
+      if packet.find('tcp') is not None:
+          tcp = packet.find('tcp')
+          m.tp_src = tcp.srcport
+      elif packet.find('udp') is not None:
+          udp = packet.find('udp')
+          m.tp_src = udp.srcport
 
       msg.match = m
 
-      # Now do checks for firewall:
-      # Note that you MUST define at least one Firewall rule!
-      firewall_check = True
+      # This will determine if any of the rules match.
+      # If so, this flow will be pushed to drop packets.
+      firewall_push = False
 
-      if (self.rules["port"] is not None and self.rules["port"] != packet_in.in_port):
-          log.debug('Difference found in port: ' + str(self.rules["port"]) + ", " + str(packet_in.in_port))
-          firewall_check = False
-      if (self.rules["protocol"] is not None):
-          if (self.rules["protocol"] == "TCP" and packet.find('tcp') is None):
-              log.debug('Difference found in protocol: ' + str(packet.find('tcp')))
+      for rule in self.rules:
+          # Now do checks for firewall:
+          # Note that you MUST define at least one Firewall rule!
+          firewall_check = True
+          if (rule.get("port") is not None and rule.get("port") != str(m.tp_src)):
+              log.debug('Difference found in port: ' + str(rule.get("port")) + ", " + str(m.tp_src))
               firewall_check = False
-          elif (self.rules["protocol"] == "UDP" and packet.find('udp') is None):
-              log.debug('Difference found in protocol: ' + str(packet.find('udp')))
-              log.debug('Difference found in protocol')
+          if (rule.get("protocol") is not None):
+              if (rule.get("protocol") == "TCP" and packet.find('tcp') is None):
+                  log.debug('Difference found in protocol: ' + str(packet.find('tcp')))
+                  firewall_check = False
+              elif (rule.get("protocol") == "UDP" and packet.find('udp') is None):
+                  log.debug('Difference found in protocol: ' + str(packet.find('udp')))
+                  log.debug('Difference found in protocol')
+                  firewall_check = False
+          if (rule.get("ip_source") is not None and rule.get("ip_source") != m.nw_src):
+              log.debug('Difference found in source IP: ' + str(rule.get("ip_source")) + ", " + str(m.nw_src))
               firewall_check = False
-      if (self.rules["ip_source"] is not None and self.rules["ip_source"] != m.nw_src):
-          log.debug('Difference found in source IP: ' + str(self.rules["ip_source"]) + ", " + str(m.nw_src))
-          firewall_check = False
-      if (self.rules["ip_dest"] is not None and self.rules["ip_dest"] != m.nw_dst):
-          log.debug('Difference found in destination IP: ' + str(self.rules["ip_dest"]) + ", " + str(m.nw_dst))
-          firewall_check = False
+          if (rule.get("ip_dest") is not None and rule.get("ip_dest") != m.nw_dst):
+              log.debug('Difference found in destination IP: ' + str(rule.get("ip_dest")) + ", " + str(m.nw_dst))
+              firewall_check = False
+
+          if firewall_check == True:
+              firewall_push = True
 
 
       # Set other fields of flow_mod (timeouts? buffer_id?)
       # We decide on not setting any of those fields, for they are unecessary
       #
       # Add an output action, and send -- similar to resend_packet()
-      if (firewall_check == False):
+      if (firewall_push == False):
           log.debug('This packet is not to be dropped')
           action = of.ofp_action_output(port = self.mac_to_port[dest_mac])
           msg.actions.append(action)
