@@ -1,0 +1,4 @@
+*.import
+.import/*
+*.swp
+gmt/default_env.tres
