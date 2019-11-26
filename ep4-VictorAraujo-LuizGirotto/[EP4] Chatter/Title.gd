@@ -3,11 +3,15 @@ extends Control
 # UDP abstractions, first to listen, then to send.
 var udp_l = PacketPeerUDP.new()
 var udp_s = PacketPeerUDP.new()
+var uname
 
-var TEXTEDIT_LIMIT = 35
+var TEXTEDIT_LIMIT = 35 #column/character limit
 var current_text = ''
 var cursor_line = 0
 var cursor_column = 0
+
+var CB_LIMIT = 14 #line/message limit
+var cb_line = 0
 
 func _ready():
 	set_process_input(false)
@@ -17,12 +21,14 @@ func _ready():
 func _on_T1_pressed():
 	udp_l.listen(1025)
 	udp_s.set_dest_address("127.0.0.1", 1026)
+	uname = "Luiz"
 	initialize()
 
 
 func _on_T2_pressed():
 	udp_l.listen(1026)
 	udp_s.set_dest_address("127.0.0.1", 1025)
+	uname = "Victor"
 	initialize()
 
 func initialize():
@@ -30,20 +36,29 @@ func initialize():
 	$T2.hide()
 	$TextBGInner.show()
 	$TextBGOuter.show()
-	$"TextEdit".show()
+	$ChatBox.show()	
+	$TypeBox.show()
 	$">".show()
 	
-	$"TextEdit".grab_focus()
+	$TypeBox.grab_focus()
 	
 	set_process_input(true)
 	set_process(true)
 
 func _input(event):
 	if event.is_action_pressed("send"):
-		var msg = $TextEdit.get_line(0)
-		$TextEdit.select_all()
-		$TextEdit.cut()
-		print(msg)
+		var msg = $TypeBox.get_line(0)
+		$TypeBox.select_all()
+		$TypeBox.cut()
+		# Se a mensagem não começar com brackets, converter a variavel para bytes (serializar), e enviar.
+		if true:
+			cb_insert_text(msg)
+#			var msg_bytes = var2bytes(msg)
+#			udp_s.put_packet(msg_bytes)
+		# Caso contrario, enviar a mensagem em um PoolByteArray
+		else:
+			pass
+		
 #		udp_s.put_packet(PoolByteArray([20, 0, 0, 0, 0, 0, 0, 255]))
 
 func _process(delta):
@@ -53,24 +68,40 @@ func _process(delta):
 	var msg = bytes2var(pkt)
 
 func _on_TextEdit_text_changed():
-	$TextEdit.cursor_set_line(0)
+	$TypeBox.cursor_set_line(0)
 
-	var new_text = $TextEdit.text
+	var new_text = $TypeBox.text
 	if new_text.length() > TEXTEDIT_LIMIT:
-		$TextEdit.text = current_text
+		$TypeBox.text = current_text
 		# when replacing the text, the cursor will get moved to the beginning of the
 		# text, so move it back to where it was 
-		$TextEdit.cursor_set_column(cursor_column)
+		$TypeBox.cursor_set_column(cursor_column)
 
 	else:
-		current_text = $TextEdit.text
+		current_text = $TypeBox.text
 		# save current position of cursor for when we have reached the limit
-		cursor_line = $TextEdit.cursor_get_line()
-		cursor_column = $TextEdit.cursor_get_column()
+		cursor_line = $TypeBox.cursor_get_line()
+		cursor_column = $TypeBox.cursor_get_column()
 
 func _on_TextEdit_cursor_changed():
-	$TextEdit.cursor_set_line(0)
+	$TypeBox.cursor_set_line(0)
 
+func cb_insert_text(message):
+	if cb_line + 1 > CB_LIMIT:
+		$ChatBox.cursor_set_line(0)
+		$ChatBox.cut()
+		for i in range (1, CB_LIMIT):
+			print(i)
+			$ChatBox.select(i, 0, i, TEXTEDIT_LIMIT)
+			$ChatBox.cut()
+			$ChatBox.cursor_set_line(i-1)
+			$ChatBox.paste()
+		$ChatBox.cursor_set_line(CB_LIMIT)
+		$ChatBox.insert_text_at_cursor(message)
+	else:
+		$ChatBox.cursor_set_line(cb_line)
+		$ChatBox.insert_text_at_cursor(message)
+		cb_line += 1
 
 # TEST
 
