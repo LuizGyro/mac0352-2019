@@ -4,6 +4,11 @@ extends Control
 var udp_l = PacketPeerUDP.new()
 var udp_s = PacketPeerUDP.new()
 
+var TEXTEDIT_LIMIT = 35
+var current_text = ''
+var cursor_line = 0
+var cursor_column = 0
+
 func _ready():
 	set_process_input(false)
 	set_process(false)
@@ -35,7 +40,10 @@ func initialize():
 
 func _input(event):
 	if event.is_action_pressed("send"):
-		pass
+		var msg = $TextEdit.get_line(0)
+		$TextEdit.select_all()
+		$TextEdit.cut()
+		print(msg)
 #		udp_s.put_packet(PoolByteArray([20, 0, 0, 0, 0, 0, 0, 255]))
 
 func _process(delta):
@@ -44,7 +52,24 @@ func _process(delta):
 	var pkt = udp_l.get_packet()
 	var msg = bytes2var(pkt)
 
+func _on_TextEdit_text_changed():
+	$TextEdit.cursor_set_line(0)
 
+	var new_text = $TextEdit.text
+	if new_text.length() > TEXTEDIT_LIMIT:
+		$TextEdit.text = current_text
+		# when replacing the text, the cursor will get moved to the beginning of the
+		# text, so move it back to where it was 
+		$TextEdit.cursor_set_column(cursor_column)
+
+	else:
+		current_text = $TextEdit.text
+		# save current position of cursor for when we have reached the limit
+		cursor_line = $TextEdit.cursor_get_line()
+		cursor_column = $TextEdit.cursor_get_column()
+
+func _on_TextEdit_cursor_changed():
+	$TextEdit.cursor_set_line(0)
 
 
 # TEST
