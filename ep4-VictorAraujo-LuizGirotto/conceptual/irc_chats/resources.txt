@@ -1,0 +1,5 @@
+https://docs.godotengine.org/en/3.1/classes/class_poolbytearray.html#class-poolbytearray
+https://docs.godotengine.org/en/3.1/tutorials/misc/binary_serialization_api.html
+https://en.wikipedia.org/wiki/Endianness
+http://www.asciitable.com/
+https://en.wikipedia.org/wiki/Copy-on-write
