@@ -50,6 +50,8 @@ func _input(event):
 		var msg = $TypeBox.get_line(0)
 		$TypeBox.select_all()
 		$TypeBox.cut()
+		if msg == "":
+			return
 		# Se a mensagem não começar com brackets, converter a variavel para bytes (serializar), e enviar.
 		if true:
 			cb_insert_text(msg)
@@ -88,19 +90,20 @@ func _on_TextEdit_cursor_changed():
 
 func cb_insert_text(message):
 	if cb_line + 1 > CB_LIMIT:
-		$ChatBox.cursor_set_line(0)
+		$ChatBox.select(0, 0, 0, TEXTEDIT_LIMIT)
 		$ChatBox.cut()
 		for i in range (1, CB_LIMIT):
-			print(i)
+#			print(str("i: ", i, ", contents: ", $ChatBox.get_line(i)))
 			$ChatBox.select(i, 0, i, TEXTEDIT_LIMIT)
+			var temp = $ChatBox.get_line(i)
 			$ChatBox.cut()
 			$ChatBox.cursor_set_line(i-1)
-			$ChatBox.paste()
-		$ChatBox.cursor_set_line(CB_LIMIT)
+			$ChatBox.insert_text_at_cursor(temp)
+		$ChatBox.cursor_set_line(CB_LIMIT - 1)
 		$ChatBox.insert_text_at_cursor(message)
 	else:
 		$ChatBox.cursor_set_line(cb_line)
-		$ChatBox.insert_text_at_cursor(message)
+		$ChatBox.insert_text_at_cursor(str(uname, ": ", message, '\n'))
 		cb_line += 1
 
 # TEST
