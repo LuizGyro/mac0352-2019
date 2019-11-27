@@ -60,17 +60,17 @@ func _input(event):
 			udp_s.put_packet(msg_bytes)
 		# Caso contrario, enviar a mensagem em um PoolByteArray
 		else:
+			var original_msg = msg
 			# Transform string into bytes
 			msg = msg.substr(1, msg.length() - 2)
 			var msg_psa = msg.split(",")
 			var msg_a = []
 			for s in msg_psa:
 				msg_a.append(s.to_int())
+			var i_msg = PoolByteArray(msg_a)
 			
 			# Interpret message locally, then send
-			var i_msg = bytes2var(PoolByteArray(msg_a))
-			if (typeof(i_msg) == TYPE_STRING):
-				cb_insert_text(i_msg)
+			cb_insert_text(str("RAW: ", original_msg))
 			udp_s.put_packet(PoolByteArray(msg_a))
 		
 #		udp_s.put_packet(PoolByteArray([20, 0, 0, 0, 0, 0, 0, 255]))
