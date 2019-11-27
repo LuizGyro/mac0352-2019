@@ -34,13 +34,16 @@ func _on_T2_pressed():
 func initialize():
 	$T1.hide()
 	$T2.hide()
-	$TextBGInner.show()
-	$TextBGOuter.show()
-	$ChatBox.show()	
+	$CBLayer/TextBGInner.show()
+	$CBLayer/TextBGOuter.show()
+	$CBLayer/ChatBox.show()
 	$TypeBox.show()
 	$">".show()
 	
 	$TypeBox.grab_focus()
+	
+	for fairy in $Fairies.get_children():
+		fairy.set_physics_process(true)
 	
 	set_process_input(true)
 	set_process(true)
@@ -104,21 +107,21 @@ func _on_TextEdit_cursor_changed():
 
 func cb_insert_text(message):
 	if cb_line + 1 > CB_LIMIT:
-		$ChatBox.select(0, 0, 0, TEXTEDIT_LIMIT + 7)
-		$ChatBox.cut()
+		$CBLayer/ChatBox.select(0, 0, 0, TEXTEDIT_LIMIT + 7)
+		$CBLayer/ChatBox.cut()
 		for i in range (1, CB_LIMIT):
-#			print(str("i: ", i, ", contents: ", $ChatBox.get_line(i)))
-			$ChatBox.select(i, 0, i, TEXTEDIT_LIMIT + 7)
-			var temp = $ChatBox.get_line(i)
+#			print(str("i: ", i, ", contents: ", $CBLayer/ChatBox.get_line(i)))
+			$CBLayer/ChatBox.select(i, 0, i, TEXTEDIT_LIMIT + 7)
+			var temp = $CBLayer/ChatBox.get_line(i)
 			print(temp)
-			$ChatBox.cut()
-			$ChatBox.cursor_set_line(i-1)
-			$ChatBox.insert_text_at_cursor(temp)
-		$ChatBox.cursor_set_line(CB_LIMIT - 1)
-		$ChatBox.insert_text_at_cursor(message)
+			$CBLayer/ChatBox.cut()
+			$CBLayer/ChatBox.cursor_set_line(i-1)
+			$CBLayer/ChatBox.insert_text_at_cursor(temp)
+		$CBLayer/ChatBox.cursor_set_line(CB_LIMIT - 1)
+		$CBLayer/ChatBox.insert_text_at_cursor(message)
 	else:
-		$ChatBox.cursor_set_line(cb_line)
-		$ChatBox.insert_text_at_cursor(str(message, '\n'))
+		$CBLayer/ChatBox.cursor_set_line(cb_line)
+		$CBLayer/ChatBox.insert_text_at_cursor(str(message, '\n'))
 		cb_line += 1
 
 # TEST

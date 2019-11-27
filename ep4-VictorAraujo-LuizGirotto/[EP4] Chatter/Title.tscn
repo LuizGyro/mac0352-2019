@@ -1,8 +1,9 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://Title.gd" type="Script" id=1]
 [ext_resource path="res://bg grama.png" type="Texture" id=2]
 [ext_resource path="res://PressStart2P.ttf" type="DynamicFontData" id=3]
+[ext_resource path="res://Fairy.tscn" type="PackedScene" id=4]
 
 [sub_resource type="StyleBoxEmpty" id=1]
 
@@ -111,7 +112,9 @@ _sections_unfolded = [ "Mouse" ]
 
 position = Vector2( 608.648, 374.506 )
 scale = Vector2( 5.54209, 6.72629 )
+z_index = -1
 texture = ExtResource( 2 )
+_sections_unfolded = [ "Z Index" ]
 
 [node name="T1" type="Button" parent="." index="1"]
 
@@ -250,7 +253,16 @@ caret_blink_speed = 0.65
 caret_moving_by_right_click = true
 _sections_unfolded = [ "Rect", "custom_fonts" ]
 
-[node name="TextBGOuter" type="ColorRect" parent="." index="5"]
+[node name="CBLayer" type="CanvasLayer" parent="." index="5"]
+
+editor/display_folded = true
+layer = 1
+offset = Vector2( 0, 0 )
+rotation = 0.0
+scale = Vector2( 1, 1 )
+transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+
+[node name="TextBGOuter" type="ColorRect" parent="CBLayer" index="0"]
 
 visible = false
 modulate = Color( 0.811765, 0.657331, 0.130127, 0.392157 )
@@ -270,7 +282,7 @@ size_flags_vertical = 1
 color = Color( 1, 1, 1, 1 )
 _sections_unfolded = [ "Rect", "Visibility" ]
 
-[node name="TextBGInner" type="ColorRect" parent="." index="6"]
+[node name="TextBGInner" type="ColorRect" parent="CBLayer" index="1"]
 
 visible = false
 modulate = Color( 0.941406, 0.73895, 0.0478058, 0.392157 )
@@ -290,7 +302,7 @@ size_flags_vertical = 1
 color = Color( 1, 1, 1, 1 )
 _sections_unfolded = [ "Rect", "Visibility" ]
 
-[node name="ChatBox" type="TextEdit" parent="." index="7"]
+[node name="ChatBox" type="TextEdit" parent="CBLayer" index="2"]
 
 visible = false
 anchor_left = 0.0
@@ -334,6 +346,23 @@ caret_blink = false
 caret_blink_speed = 0.65
 caret_moving_by_right_click = true
 _sections_unfolded = [ "custom_fonts" ]
+
+[node name="Fairies" type="Node2D" parent="." index="6"]
+
+[node name="Fairy" parent="Fairies" index="0" instance=ExtResource( 4 )]
+
+position = Vector2( -100, 320 )
+_sections_unfolded = [ "Transform", "Visibility" ]
+
+[node name="Fairy2" parent="Fairies" index="1" instance=ExtResource( 4 )]
+
+position = Vector2( -86.4339, 164.744 )
+_sections_unfolded = [ "Transform", "Visibility" ]
+
+[node name="Fairy3" parent="Fairies" index="2" instance=ExtResource( 4 )]
+
+position = Vector2( -60.8091, 440.587 )
+_sections_unfolded = [ "Transform", "Visibility" ]
 
 [connection signal="pressed" from="T1" to="." method="_on_T1_pressed"]
 
