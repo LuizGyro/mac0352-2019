@@ -5,12 +5,12 @@ var udp_l = PacketPeerUDP.new()
 var udp_s = PacketPeerUDP.new()
 var uname
 
-var TEXTEDIT_LIMIT = 27 #column/character limit
+var TEXTEDIT_LIMIT = 75 #column/character limit
 var current_text = ''
 var cursor_line = 0
 var cursor_column = 0
 
-var CB_LIMIT = 14 #line/message limit
+var CB_LIMIT = 30 #line/message limit
 var cb_line = 0
 
 func _ready():
@@ -53,14 +53,25 @@ func _input(event):
 		if msg == "":
 			return
 		# Se a mensagem não começar com brackets, converter a variavel para bytes (serializar), e enviar.
-		if true:
+		if !(msg.begins_with("[") and msg.ends_with("]")):
 			msg = str(uname, ": ", msg)
 			cb_insert_text(msg)
 			var msg_bytes = var2bytes(msg)
 			udp_s.put_packet(msg_bytes)
 		# Caso contrario, enviar a mensagem em um PoolByteArray
 		else:
-			pass
+			# Transform string into bytes
+			msg = msg.substr(1, msg.length() - 2)
+			var msg_psa = msg.split(",")
+			var msg_a = []
+			for s in msg_psa:
+				msg_a.append(s.to_int())
+			
+			# Interpret message locally, then send
+			var i_msg = bytes2var(PoolByteArray(msg_a))
+			if (typeof(i_msg) == TYPE_STRING):
+				cb_insert_text(i_msg)
+			udp_s.put_packet(PoolByteArray(msg_a))
 		
 #		udp_s.put_packet(PoolByteArray([20, 0, 0, 0, 0, 0, 0, 255]))
 
@@ -69,7 +80,8 @@ func _process(delta):
 		return
 	var pkt = udp_l.get_packet()
 	var msg = bytes2var(pkt)
-	cb_insert_text(msg)
+	if (typeof(msg) == TYPE_STRING):
+		cb_insert_text(msg)
 
 func _on_TextEdit_text_changed():
 	$TypeBox.cursor_set_line(0)
