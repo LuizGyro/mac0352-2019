@@ -17,7 +17,7 @@ _global_script_class_icons={
 
 config/name="[EP4] Chatter [FIX]"
 run/main_scene="res://Title.tscn"
-config/icon="res://icon.png"
+config/icon="res://clearfairy.png"
 
 [input]
 
