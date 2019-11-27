@@ -1,0 +1,54 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://Fairy.gd" type="Script" id=1]
+[ext_resource path="res://Fada/fairy1.png" type="Texture" id=2]
+[ext_resource path="res://Fada/fairy2.png" type="Texture" id=3]
+[ext_resource path="res://Fada/fairy3.png" type="Texture" id=4]
+[ext_resource path="res://Fada/fairy4.png" type="Texture" id=5]
+
+[sub_resource type="SpriteFrames" id=1]
+
+animations = [ {
+"frames": [ ExtResource( 2 ), ExtResource( 3 ), ExtResource( 4 ), ExtResource( 5 ) ],
+"loop": true,
+"name": "fly",
+"speed": 5.0
+} ]
+
+[node name="Fairy" type="Node2D"]
+
+script = ExtResource( 1 )
+_sections_unfolded = [ "Visibility" ]
+
+[node name="MoveTween" type="Tween" parent="." index="0"]
+
+repeat = false
+playback_process_mode = 1
+playback_speed = 1.0
+playback/active = false
+playback/repeat = false
+playback/speed = 1.0
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="." index="1"]
+
+scale = Vector2( 4, 4 )
+frames = SubResource( 1 )
+animation = "fly"
+frame = 3
+playing = true
+_sections_unfolded = [ "Transform", "Z Index" ]
+
+[node name="BobTween" type="Tween" parent="." index="2"]
+
+repeat = false
+playback_process_mode = 1
+playback_speed = 1.0
+playback/active = false
+playback/repeat = false
+playback/speed = 1.0
+
+[connection signal="tween_completed" from="MoveTween" to="." method="_on_MoveTween_tween_completed"]
+
+[connection signal="tween_completed" from="BobTween" to="." method="_on_BobTween_tween_completed"]
+
+
