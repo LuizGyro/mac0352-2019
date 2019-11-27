@@ -5,7 +5,7 @@ var udp_l = PacketPeerUDP.new()
 var udp_s = PacketPeerUDP.new()
 var uname
 
-var TEXTEDIT_LIMIT = 35 #column/character limit
+var TEXTEDIT_LIMIT = 27 #column/character limit
 var current_text = ''
 var cursor_line = 0
 var cursor_column = 0
@@ -54,9 +54,10 @@ func _input(event):
 			return
 		# Se a mensagem não começar com brackets, converter a variavel para bytes (serializar), e enviar.
 		if true:
+			msg = str(uname, ": ", msg)
 			cb_insert_text(msg)
-#			var msg_bytes = var2bytes(msg)
-#			udp_s.put_packet(msg_bytes)
+			var msg_bytes = var2bytes(msg)
+			udp_s.put_packet(msg_bytes)
 		# Caso contrario, enviar a mensagem em um PoolByteArray
 		else:
 			pass
@@ -68,6 +69,7 @@ func _process(delta):
 		return
 	var pkt = udp_l.get_packet()
 	var msg = bytes2var(pkt)
+	cb_insert_text(msg)
 
 func _on_TextEdit_text_changed():
 	$TypeBox.cursor_set_line(0)
@@ -90,12 +92,13 @@ func _on_TextEdit_cursor_changed():
 
 func cb_insert_text(message):
 	if cb_line + 1 > CB_LIMIT:
-		$ChatBox.select(0, 0, 0, TEXTEDIT_LIMIT)
+		$ChatBox.select(0, 0, 0, TEXTEDIT_LIMIT + 7)
 		$ChatBox.cut()
 		for i in range (1, CB_LIMIT):
 #			print(str("i: ", i, ", contents: ", $ChatBox.get_line(i)))
-			$ChatBox.select(i, 0, i, TEXTEDIT_LIMIT)
+			$ChatBox.select(i, 0, i, TEXTEDIT_LIMIT + 7)
 			var temp = $ChatBox.get_line(i)
+			print(temp)
 			$ChatBox.cut()
 			$ChatBox.cursor_set_line(i-1)
 			$ChatBox.insert_text_at_cursor(temp)
@@ -103,7 +106,7 @@ func cb_insert_text(message):
 		$ChatBox.insert_text_at_cursor(message)
 	else:
 		$ChatBox.cursor_set_line(cb_line)
-		$ChatBox.insert_text_at_cursor(str(uname, ": ", message, '\n'))
+		$ChatBox.insert_text_at_cursor(str(message, '\n'))
 		cb_line += 1
 
 # TEST
