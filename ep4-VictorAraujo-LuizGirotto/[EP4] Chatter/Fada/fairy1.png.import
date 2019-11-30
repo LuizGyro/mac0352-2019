@@ -7,10 +7,7 @@ path="res://.import/fairy1.png-5656dabbe5aa703d5b18a15bf96149c1.stex"
 [deps]
 
 source_file="res://Fada/fairy1.png"
-source_md5="8abce7859d2307253ca27a98aa56fbff"
-
 dest_files=[ "res://.import/fairy1.png-5656dabbe5aa703d5b18a15bf96149c1.stex" ]
-dest_md5="9d1d169798d862fda4e1693be7313ab4"
 
 [params]
 

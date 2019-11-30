@@ -1,30 +1,37 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://Title.gd" type="Script" id=1]
 [ext_resource path="res://bg grama.png" type="Texture" id=2]
 [ext_resource path="res://PressStart2P.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://Fairy.tscn" type="PackedScene" id=4]
 
-[sub_resource type="StyleBoxEmpty" id=1]
+[sub_resource type="Shader" id=1]
 
-content_margin_left = -1.0
-content_margin_right = -1.0
-content_margin_top = -1.0
-content_margin_bottom = -1.0
+code = "shader_type canvas_item;
 
-[sub_resource type="StyleBoxEmpty" id=2]
+uniform float height = 10.0;
+uniform float curve = 0.01;
+uniform float speed = 3.0;
 
-content_margin_left = -1.0
-content_margin_right = -1.0
-content_margin_top = -1.0
-content_margin_bottom = -1.0
+void vertex() {
+    VERTEX.y += height*sin(VERTEX.x*curve+TIME*speed);
+}"
 
-[sub_resource type="StyleBoxEmpty" id=3]
+[sub_resource type="ShaderMaterial" id=2]
 
-content_margin_left = -1.0
-content_margin_right = -1.0
-content_margin_top = -1.0
-content_margin_bottom = -1.0
+render_priority = 0
+shader = SubResource( 1 )
+shader_param/height = null
+shader_param/curve = null
+shader_param/speed = null
+
+[sub_resource type="DynamicFont" id=3]
+
+size = 70
+use_mipmaps = false
+use_filter = false
+font_data = ExtResource( 3 )
+_sections_unfolded = [ "Font" ]
 
 [sub_resource type="StyleBoxEmpty" id=4]
 
@@ -40,21 +47,19 @@ content_margin_right = -1.0
 content_margin_top = -1.0
 content_margin_bottom = -1.0
 
-[sub_resource type="DynamicFont" id=6]
+[sub_resource type="StyleBoxEmpty" id=6]
 
-size = 50
-use_mipmaps = false
-use_filter = false
-font_data = ExtResource( 3 )
-_sections_unfolded = [ "Extra Spacing", "Font", "Resource", "Settings" ]
+content_margin_left = -1.0
+content_margin_right = -1.0
+content_margin_top = -1.0
+content_margin_bottom = -1.0
 
-[sub_resource type="DynamicFont" id=7]
+[sub_resource type="StyleBoxEmpty" id=7]
 
-size = 10
-use_mipmaps = false
-use_filter = false
-font_data = ExtResource( 3 )
-_sections_unfolded = [ "Settings" ]
+content_margin_left = -1.0
+content_margin_right = -1.0
+content_margin_top = -1.0
+content_margin_bottom = -1.0
 
 [sub_resource type="StyleBoxEmpty" id=8]
 
@@ -63,19 +68,21 @@ content_margin_right = -1.0
 content_margin_top = -1.0
 content_margin_bottom = -1.0
 
-[sub_resource type="StyleBoxEmpty" id=9]
+[sub_resource type="DynamicFont" id=9]
 
-content_margin_left = -1.0
-content_margin_right = -1.0
-content_margin_top = -1.0
-content_margin_bottom = -1.0
+size = 50
+use_mipmaps = false
+use_filter = false
+font_data = ExtResource( 3 )
+_sections_unfolded = [ "Extra Spacing", "Font", "Resource", "Settings" ]
 
-[sub_resource type="StyleBoxEmpty" id=10]
+[sub_resource type="DynamicFont" id=10]
 
-content_margin_left = -1.0
-content_margin_right = -1.0
-content_margin_top = -1.0
-content_margin_bottom = -1.0
+size = 10
+use_mipmaps = false
+use_filter = false
+font_data = ExtResource( 3 )
+_sections_unfolded = [ "Settings" ]
 
 [sub_resource type="StyleBoxEmpty" id=11]
 
@@ -84,7 +91,28 @@ content_margin_right = -1.0
 content_margin_top = -1.0
 content_margin_bottom = -1.0
 
-[sub_resource type="DynamicFont" id=12]
+[sub_resource type="StyleBoxEmpty" id=12]
+
+content_margin_left = -1.0
+content_margin_right = -1.0
+content_margin_top = -1.0
+content_margin_bottom = -1.0
+
+[sub_resource type="StyleBoxEmpty" id=13]
+
+content_margin_left = -1.0
+content_margin_right = -1.0
+content_margin_top = -1.0
+content_margin_bottom = -1.0
+
+[sub_resource type="StyleBoxEmpty" id=14]
+
+content_margin_left = -1.0
+content_margin_right = -1.0
+content_margin_top = -1.0
+content_margin_bottom = -1.0
+
+[sub_resource type="DynamicFont" id=15]
 
 size = 10
 use_mipmaps = false
@@ -101,6 +129,7 @@ anchor_bottom = 0.0
 margin_right = 1024.0
 margin_bottom = 600.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
@@ -116,7 +145,33 @@ z_index = -1
 texture = ExtResource( 2 )
 _sections_unfolded = [ "Z Index" ]
 
-[node name="T1" type="Button" parent="." index="1"]
+[node name="Chatter" type="Label" parent="." index="1"]
+
+material = SubResource( 2 )
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 267.0
+margin_top = 100.0
+margin_right = 757.0
+margin_bottom = 170.0
+rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 4
+custom_fonts/font = SubResource( 3 )
+custom_colors/font_color = Color( 0.329412, 0.729412, 0.501961, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
+text = "Chatter"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+_sections_unfolded = [ "Material", "Rect", "custom_colors", "custom_constants", "custom_fonts" ]
+
+[node name="T1" type="Button" parent="." index="2"]
 
 anchor_left = 0.0
 anchor_top = 0.0
@@ -127,17 +182,18 @@ margin_top = 304.0
 margin_right = 503.0
 margin_bottom = 380.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 focus_mode = 2
 mouse_filter = 0
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-custom_styles/hover = SubResource( 1 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 4 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 6 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 8 )
+custom_fonts/font = SubResource( 9 )
 custom_colors/font_color = Color( 0.333333, 0.733333, 0.501961, 1 )
 custom_colors/font_color_hover = Color( 0.333333, 0.733333, 0.501961, 1 )
 custom_colors/font_color_pressed = Color( 0.215686, 0.580392, 0.431373, 1 )
@@ -148,9 +204,9 @@ group = null
 text = "TYPE I"
 flat = true
 align = 1
-_sections_unfolded = [ "custom_fonts" ]
+_sections_unfolded = [ "custom_colors", "custom_fonts" ]
 
-[node name="T2" type="Button" parent="." index="2"]
+[node name="T2" type="Button" parent="." index="3"]
 
 anchor_left = 0.0
 anchor_top = 0.0
@@ -161,17 +217,18 @@ margin_top = 304.0
 margin_right = 953.0
 margin_bottom = 380.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 focus_mode = 2
 mouse_filter = 0
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-custom_styles/hover = SubResource( 1 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 4 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 6 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 8 )
+custom_fonts/font = SubResource( 9 )
 custom_colors/font_color = Color( 0.333333, 0.733333, 0.501961, 1 )
 custom_colors/font_color_hover = Color( 0.333333, 0.733333, 0.501961, 1 )
 custom_colors/font_color_pressed = Color( 0.215686, 0.580392, 0.431373, 1 )
@@ -184,7 +241,7 @@ flat = true
 align = 1
 _sections_unfolded = [ "Rect", "custom_fonts" ]
 
-[node name=">" type="Label" parent="." index="3"]
+[node name=">" type="Label" parent="." index="4"]
 
 visible = false
 anchor_left = 0.0
@@ -196,11 +253,12 @@ margin_top = 562.0
 margin_right = 67.0
 margin_bottom = 574.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 4
-custom_fonts/font = SubResource( 7 )
+custom_fonts/font = SubResource( 10 )
 custom_colors/font_color = Color( 0.35909, 0.15477, 0.808594, 1 )
 text = ">"
 percent_visible = 1.0
@@ -208,7 +266,7 @@ lines_skipped = 0
 max_lines_visible = -1
 _sections_unfolded = [ "Rect", "custom_colors", "custom_fonts" ]
 
-[node name="TypeBox" type="TextEdit" parent="." index="4"]
+[node name="TypeBox" type="TextEdit" parent="." index="5"]
 
 visible = false
 anchor_left = 0.0
@@ -226,11 +284,11 @@ mouse_filter = 0
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-custom_styles/read_only = SubResource( 8 )
-custom_styles/focus = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
-custom_styles/completion = SubResource( 11 )
-custom_fonts/font = SubResource( 12 )
+custom_styles/read_only = SubResource( 11 )
+custom_styles/focus = SubResource( 12 )
+custom_styles/normal = SubResource( 13 )
+custom_styles/completion = SubResource( 14 )
+custom_fonts/font = SubResource( 15 )
 custom_colors/member_variable_color = Color( 0, 0, 0, 1 )
 custom_colors/selection_color = Color( 0.811765, 0.654902, 0.129412, 0.392157 )
 custom_colors/caret_color = Color( 0.356863, 0.152941, 0.807843, 1 )
@@ -253,7 +311,7 @@ caret_blink_speed = 0.65
 caret_moving_by_right_click = true
 _sections_unfolded = [ "Rect", "custom_fonts" ]
 
-[node name="CBLayer" type="CanvasLayer" parent="." index="5"]
+[node name="CBLayer" type="CanvasLayer" parent="." index="6"]
 
 editor/display_folded = true
 layer = 1
@@ -275,6 +333,7 @@ margin_top = 30.0
 margin_right = 994.0
 margin_bottom = 530.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 0
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
@@ -295,6 +354,7 @@ margin_top = 40.0
 margin_right = 984.0
 margin_bottom = 520.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 0
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
@@ -320,11 +380,11 @@ mouse_filter = 0
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-custom_styles/read_only = SubResource( 8 )
-custom_styles/focus = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
-custom_styles/completion = SubResource( 11 )
-custom_fonts/font = SubResource( 12 )
+custom_styles/read_only = SubResource( 11 )
+custom_styles/focus = SubResource( 12 )
+custom_styles/normal = SubResource( 13 )
+custom_styles/completion = SubResource( 14 )
+custom_fonts/font = SubResource( 15 )
 custom_colors/member_variable_color = Color( 0, 0, 0, 1 )
 custom_colors/selection_color = Color( 0.811765, 0.654902, 0.129412, 0.392157 )
 custom_colors/caret_color = Color( 0.356863, 0.152941, 0.807843, 1 )
@@ -347,7 +407,9 @@ caret_blink_speed = 0.65
 caret_moving_by_right_click = true
 _sections_unfolded = [ "custom_fonts" ]
 
-[node name="Fairies" type="Node2D" parent="." index="6"]
+[node name="Fairies" type="Node2D" parent="." index="7"]
+
+editor/display_folded = true
 
 [node name="Fairy" parent="Fairies" index="0" instance=ExtResource( 4 )]
 

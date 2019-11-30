@@ -32,6 +32,7 @@ func _on_T2_pressed():
 	initialize()
 
 func initialize():
+	$Chatter.hide()
 	$T1.hide()
 	$T2.hide()
 	$CBLayer/TextBGInner.show()

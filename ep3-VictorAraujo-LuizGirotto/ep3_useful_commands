@@ -1,0 +1,13 @@
+ssh -X mininet@192.168.56.101
+exit (para sair)
+
+(tcp.port == 6633) and (!frame.len == 74) and openflow_v1
+
+sudo sshfs mininet@192.168.56.101:pox/pox/misc ~/remote_code
+
+of_tutorial.py:
+
+log.debug('Printing mvars of packet_in:')
+print dir(packet_in)
+
+https://github.com/khooi8913/openflow-tutorial/blob/master/Creating%20a%20Learning%20Switch/of_tutorial.py
