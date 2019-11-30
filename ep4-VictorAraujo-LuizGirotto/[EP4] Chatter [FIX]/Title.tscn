@@ -161,6 +161,7 @@ position = Vector2( -86.4339, 164.744 )
 
 [node name="Fairy3" parent="Fairies" instance=ExtResource( 4 )]
 position = Vector2( -60.8091, 440.587 )
+
 [connection signal="pressed" from="T1" to="." method="_on_T1_pressed"]
 [connection signal="pressed" from="T2" to="." method="_on_T2_pressed"]
 [connection signal="cursor_changed" from="TypeBox" to="." method="_on_TextEdit_cursor_changed"]

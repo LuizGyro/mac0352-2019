@@ -1,0 +1,7 @@
+> O que faz decode_uint32? O que ele retorna? Isso é de C++?
+
+> O que é esse ::Write()?
+	> :: é para chamar classe. Tem uma função Write global.
+
+> Importante é a parte do cast do count, por que o data.resize que devia ficar enorme. Importante ver tambem a função write pra poder realmente explicar, mas deve ser isso.
+  Ate por que, esta correção ta rolando em todos os tipos de PoolArray.
