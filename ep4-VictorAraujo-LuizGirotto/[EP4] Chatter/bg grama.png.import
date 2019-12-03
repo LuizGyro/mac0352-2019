@@ -7,7 +7,10 @@ path="res://.import/bg grama.png-8dedc878ec6c2b5476bc49de5bcb2564.stex"
 [deps]
 
 source_file="res://bg grama.png"
+source_md5="b71e833ed8fb5ea58515de898091f0b1"
+
 dest_files=[ "res://.import/bg grama.png-8dedc878ec6c2b5476bc49de5bcb2564.stex" ]
+dest_md5="f7d7b9129241317b97c85d832116e8e3"
 
 [params]
 
