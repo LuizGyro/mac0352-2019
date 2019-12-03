@@ -13,6 +13,8 @@ var cursor_column = 0
 var CB_LIMIT = 30 #line/message limit
 var cb_line = 0
 
+var focus_active = false
+
 func _ready():
 	set_process_input(false)
 	set_process(false)
@@ -76,8 +78,17 @@ func _input(event):
 			# Interpret message locally, then send
 			cb_insert_text(str("RAW: ", original_msg))
 			udp_s.put_packet(PoolByteArray(msg_a))
-		
-#		udp_s.put_packet(PoolByteArray([20, 0, 0, 0, 0, 0, 0, 255]))
+	elif event.is_action_pressed("focus"):
+		var mouse_pos = get_viewport().get_mouse_position()
+		if (focus_active):
+			$Camera2D.position= Vector2(0, 0)
+			$Camera2D.zoom = Vector2(1, 1)
+			focus_active = false
+		else:
+			$Camera2D.position= mouse_pos
+			$Camera2D.zoom = Vector2(0.25, 0.25)
+			focus_active = true
+			
 
 func _process(delta):
 	if udp_l.get_available_packet_count() < 1:
